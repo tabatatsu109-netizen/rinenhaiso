@@ -1,0 +1,2009 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Linen Order System</title>
+<style>
+  :root {
+    --primary: #1a5f7a;
+    --primary-light: #2980a8;
+    --primary-dark: #134a60;
+    --accent: #e8f4f8;
+    --accent2: #d0eaf5;
+    --success: #27ae60;
+    --warning: #f39c12;
+    --danger: #e74c3c;
+    --gray-50: #f8fafc;
+    --gray-100: #f1f5f9;
+    --gray-200: #e2e8f0;
+    --gray-300: #cbd5e1;
+    --gray-400: #94a3b8;
+    --gray-600: #475569;
+    --gray-700: #334155;
+    --gray-800: #1e293b;
+    --text: #1e293b;
+    --radius: 12px;
+    --shadow: 0 2px 12px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 20px rgba(0,0,0,0.12);
+    --font: 'Hiragino Kaku Gothic ProN', 'Meiryo', 'Yu Gothic', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  
+  body {
+    font-family: var(--font);
+    background: var(--gray-100);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: var(--primary);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+  .header-title {
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+  }
+  .header-logo {
+    font-size: 12px;
+    opacity: 0.8;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .header-back {
+    background: rgba(255,255,255,0.2);
+    border: none;
+    color: white;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+  .header-menu-btn {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 22px;
+    cursor: pointer;
+    padding: 4px 8px;
+  }
+
+  /* ===== PAGES ===== */
+  .page { display: none; min-height: 100vh; }
+  .page.active { display: block; }
+
+  /* ===== LOGIN PAGE ===== */
+  #page-login {
+    background: linear-gradient(160deg, #1a5f7a 0%, #134a60 50%, #0d3348 100%);
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px;
+    min-height: 100vh;
+  }
+  #page-login.active { display: flex; }
+  .login-logo {
+    text-align: center;
+    margin-bottom: 48px;
+    color: white;
+  }
+  .login-logo-icon {
+    font-size: 56px;
+    margin-bottom: 12px;
+    display: block;
+  }
+  .login-logo-name {
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    opacity: 0.95;
+  }
+  .login-logo-sub {
+    font-size: 13px;
+    opacity: 0.6;
+    margin-top: 4px;
+    letter-spacing: 1px;
+  }
+  .login-card {
+    background: white;
+    border-radius: 20px;
+    padding: 36px 28px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  }
+  .login-card h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 28px;
+    text-align: center;
+  }
+  .form-group {
+    margin-bottom: 20px;
+  }
+  .form-group label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-600);
+    margin-bottom: 8px;
+  }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    border: 2px solid var(--gray-200);
+    border-radius: 10px;
+    font-size: 18px;
+    font-family: var(--font);
+    color: var(--text);
+    transition: border-color 0.2s;
+    background: white;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 3px rgba(26,95,122,0.1);
+  }
+  .login-hint {
+    background: var(--accent);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--gray-600);
+    margin-bottom: 20px;
+    line-height: 1.6;
+  }
+
+  /* ===== BUTTONS ===== */
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 18px;
+    font-weight: 700;
+    font-family: var(--font);
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.15s;
+    -webkit-appearance: none;
+  }
+  .btn:active { transform: scale(0.97); }
+  .btn-primary {
+    background: var(--primary);
+    color: white;
+    box-shadow: 0 4px 12px rgba(26,95,122,0.3);
+  }
+  .btn-primary:hover { background: var(--primary-light); }
+  .btn-secondary {
+    background: white;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+  }
+  .btn-success {
+    background: var(--success);
+    color: white;
+    box-shadow: 0 4px 12px rgba(39,174,96,0.3);
+  }
+  .btn-danger {
+    background: var(--danger);
+    color: white;
+  }
+  .btn-gray {
+    background: var(--gray-200);
+    color: var(--gray-700);
+  }
+  .btn-sm {
+    padding: 10px 16px;
+    font-size: 15px;
+    border-radius: 8px;
+  }
+  .btn-inline {
+    display: inline-block;
+    width: auto;
+    padding: 10px 20px;
+  }
+
+  /* ===== TOP / HOME ===== */
+  .home-greeting {
+    background: white;
+    padding: 24px 20px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .home-greeting-hello {
+    font-size: 15px;
+    color: var(--gray-600);
+    margin-bottom: 4px;
+  }
+  .home-greeting-name {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--primary);
+  }
+  .home-delivery-card {
+    margin: 16px;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    border-radius: 16px;
+    padding: 20px;
+    color: white;
+    box-shadow: var(--shadow-md);
+  }
+  .home-delivery-label {
+    font-size: 13px;
+    opacity: 0.8;
+    margin-bottom: 6px;
+    letter-spacing: 0.5px;
+  }
+  .home-delivery-date {
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .home-delivery-sub {
+    font-size: 13px;
+    opacity: 0.7;
+  }
+  .home-menu {
+    padding: 8px 16px 32px;
+  }
+  .home-menu-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--gray-400);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-left: 4px;
+  }
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .menu-item {
+    background: white;
+    border-radius: 14px;
+    padding: 22px 16px;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: var(--shadow);
+    transition: all 0.15s;
+    border: 2px solid transparent;
+  }
+  .menu-item:active {
+    transform: scale(0.96);
+    border-color: var(--primary);
+  }
+  .menu-item-icon { font-size: 32px; margin-bottom: 10px; display: block; }
+  .menu-item-label { font-size: 16px; font-weight: 700; color: var(--primary); }
+  .menu-item-sub { font-size: 12px; color: var(--gray-400); margin-top: 4px; }
+
+  /* ===== CONTENT AREA ===== */
+  .content { padding: 16px; padding-bottom: 40px; }
+  .section-card {
+    background: white;
+    border-radius: var(--radius);
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .section-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-card-body { padding: 16px 20px; }
+
+  /* ===== RADIO BUTTONS ===== */
+  .radio-group {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .radio-option {
+    flex: 1;
+    min-width: 140px;
+  }
+  .radio-option input[type="radio"] { display: none; }
+  .radio-option label {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px 12px;
+    border: 2px solid var(--gray-300);
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    transition: all 0.15s;
+    text-align: center;
+    gap: 8px;
+  }
+  .radio-option input[type="radio"]:checked + label {
+    border-color: var(--primary);
+    background: var(--accent);
+    color: var(--primary);
+  }
+
+  /* ===== QUANTITY INPUT ===== */
+  .qty-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .qty-row:last-child { border-bottom: none; }
+  .qty-name {
+    font-size: 17px;
+    font-weight: 600;
+    color: var(--text);
+    flex: 1;
+  }
+  .qty-control {
+    display: flex;
+    align-items: center;
+    gap: 0;
+  }
+  .qty-btn {
+    width: 44px;
+    height: 44px;
+    border: 2px solid var(--gray-300);
+    background: white;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.1s;
+    -webkit-appearance: none;
+  }
+  .qty-btn:first-child { border-radius: 10px 0 0 10px; }
+  .qty-btn:last-child { border-radius: 0 10px 10px 0; }
+  .qty-btn:active { background: var(--accent); }
+  .qty-input {
+    width: 64px;
+    height: 44px;
+    border: 2px solid var(--gray-300);
+    border-left: none;
+    border-right: none;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    font-family: var(--font);
+    color: var(--text);
+    background: var(--gray-50);
+    -webkit-appearance: none;
+  }
+  .qty-input:focus { outline: none; background: var(--accent); }
+
+  /* ===== COPY PREVIOUS ===== */
+  .copy-prev-card {
+    background: linear-gradient(135deg, #e8f4f8 0%, #d0eaf5 100%);
+    border: 2px dashed var(--primary-light);
+    border-radius: 12px;
+    padding: 18px;
+    margin-bottom: 16px;
+  }
+  .copy-prev-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .copy-prev-items {
+    font-size: 13px;
+    color: var(--gray-600);
+    margin-bottom: 14px;
+    line-height: 1.8;
+  }
+
+  /* ===== ORDER CONFIRM ===== */
+  .confirm-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--gray-100);
+    font-size: 16px;
+  }
+  .confirm-row:last-child { border-bottom: none; }
+  .confirm-label { color: var(--gray-600); font-weight: 500; }
+  .confirm-value { font-weight: 700; color: var(--text); }
+  .confirm-badge {
+    display: inline-block;
+    background: var(--primary);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  /* ===== SUCCESS ===== */
+  .success-page {
+    text-align: center;
+    padding: 60px 24px 40px;
+  }
+  .success-icon { font-size: 80px; margin-bottom: 20px; display: block; }
+  .success-title { font-size: 26px; font-weight: 700; color: var(--success); margin-bottom: 12px; }
+  .success-order-num {
+    background: var(--gray-100);
+    border-radius: 12px;
+    padding: 16px 24px;
+    margin: 24px auto;
+    max-width: 280px;
+    font-size: 13px;
+    color: var(--gray-600);
+  }
+  .success-order-num span {
+    display: block;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--primary);
+    margin-top: 6px;
+    letter-spacing: 1px;
+  }
+  .success-msg { font-size: 16px; color: var(--gray-600); line-height: 1.7; margin-bottom: 32px; }
+
+  /* ===== HISTORY LIST ===== */
+  .history-item {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    transition: all 0.15s;
+    border: 2px solid transparent;
+  }
+  .history-item:active { border-color: var(--primary); }
+  .history-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .history-date { font-size: 15px; font-weight: 700; color: var(--primary); }
+  .history-badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: var(--accent2);
+    color: var(--primary);
+  }
+  .history-summary { font-size: 14px; color: var(--gray-600); line-height: 1.6; }
+  .history-arrow { color: var(--gray-400); float: right; }
+
+  /* ===== DELIVERY RECEIPT ===== */
+  .receipt-item {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .receipt-info { flex: 1; }
+  .receipt-date { font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .receipt-num { font-size: 13px; color: var(--gray-600); }
+  .receipt-actions { display: flex; gap: 8px; }
+  .receipt-btn {
+    background: var(--accent);
+    border: 1px solid var(--primary-light);
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-family: var(--font);
+  }
+
+  /* ===== CONTACT ===== */
+  .contact-type {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .contact-type-btn {
+    border: 2px solid var(--gray-300);
+    background: white;
+    border-radius: 10px;
+    padding: 14px 8px;
+    text-align: center;
+    cursor: pointer;
+    font-family: var(--font);
+    transition: all 0.15s;
+  }
+  .contact-type-btn.active {
+    border-color: var(--primary);
+    background: var(--accent);
+    color: var(--primary);
+  }
+  .contact-type-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+  .contact-type-label { font-size: 12px; font-weight: 700; }
+
+  /* ===== ADMIN ===== */
+  #page-admin {
+    background: var(--gray-50);
+    min-height: 100vh;
+  }
+  .admin-header {
+    background: var(--gray-800);
+    color: white;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .admin-header-title { font-size: 18px; font-weight: 700; }
+  .admin-tabs {
+    display: flex;
+    background: white;
+    border-bottom: 2px solid var(--gray-200);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .admin-tabs::-webkit-scrollbar { display: none; }
+  .admin-tab {
+    flex: 0 0 auto;
+    padding: 14px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-600);
+    cursor: pointer;
+    border-bottom: 3px solid transparent;
+    white-space: nowrap;
+    transition: all 0.15s;
+  }
+  .admin-tab.active {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+  }
+  .admin-content { display: none; padding: 16px; }
+  .admin-content.active { display: block; }
+
+  /* ADMIN FACILITY */
+  .facility-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .facility-info { flex: 1; }
+  .facility-name { font-size: 17px; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+  .facility-meta { font-size: 13px; color: var(--gray-600); }
+  .facility-actions { display: flex; gap: 8px; }
+  .facility-edit-btn, .facility-del-btn {
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font);
+    border: none;
+  }
+  .facility-edit-btn { background: var(--accent2); color: var(--primary); }
+  .facility-del-btn { background: #fde8e8; color: var(--danger); }
+
+  /* ADMIN ORDER LIST */
+  .order-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px 18px;
+    margin-bottom: 12px;
+    box-shadow: var(--shadow);
+  }
+  .order-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .order-facility { font-size: 16px; font-weight: 700; color: var(--text); }
+  .status-badge {
+    font-size: 12px;
+    font-weight: 700;
+    padding: 5px 12px;
+    border-radius: 20px;
+  }
+  .status-new { background: #fff3cd; color: #856404; }
+  .status-processing { background: #cce5ff; color: #004085; }
+  .status-done { background: #d4edda; color: #155724; }
+  .order-meta { font-size: 13px; color: var(--gray-600); margin-bottom: 10px; }
+  .order-items { font-size: 14px; color: var(--text); line-height: 1.8; }
+  .order-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .order-action-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: var(--font);
+    border: none;
+    flex: 1;
+    min-width: 80px;
+  }
+
+  /* ADMIN DELIVERY */
+  .delivery-date-select {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .delivery-date-select label { font-size: 15px; font-weight: 600; color: var(--gray-700); }
+  .delivery-date-select input[type="date"] {
+    flex: 1;
+    padding: 10px 12px;
+    border: 2px solid var(--gray-300);
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: var(--font);
+  }
+  .delivery-list-card {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    margin-bottom: 16px;
+  }
+  .delivery-list-row {
+    display: flex;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--gray-100);
+    align-items: center;
+    gap: 12px;
+  }
+  .delivery-list-row:last-child { border-bottom: none; }
+  .delivery-order-num {
+    font-size: 13px;
+    font-weight: 700;
+    color: white;
+    background: var(--primary);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .delivery-facility-name { font-size: 15px; font-weight: 700; flex: 1; }
+  .delivery-type { font-size: 13px; color: var(--gray-600); }
+
+  /* SUMMARY */
+  .summary-table {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--gray-100);
+  }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-item { font-size: 17px; font-weight: 600; }
+  .summary-qty { font-size: 22px; font-weight: 800; color: var(--primary); }
+  .summary-unit { font-size: 14px; color: var(--gray-600); }
+
+  /* MODALS */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 200;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+  .modal {
+    background: white;
+    border-radius: 20px 20px 0 0;
+    padding: 28px 24px 40px;
+    width: 100%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  .modal-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary);
+    margin-bottom: 24px;
+    text-align: center;
+  }
+  .modal-close {
+    float: right;
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--gray-400);
+    line-height: 1;
+    margin-top: -4px;
+  }
+
+  /* DRAG */
+  .drag-item {
+    background: white;
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: grab;
+    transition: box-shadow 0.15s;
+  }
+  .drag-item.dragging {
+    box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    opacity: 0.8;
+  }
+  .drag-handle { font-size: 20px; color: var(--gray-400); }
+  .drag-label { font-size: 16px; font-weight: 600; flex: 1; }
+  .drag-day { font-size: 13px; color: var(--gray-600); }
+
+  /* UTILS */
+  .text-center { text-align: center; }
+  .mt-16 { margin-top: 16px; }
+  .mt-24 { margin-top: 24px; }
+  .gap-12 { gap: 12px; }
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .divider {
+    height: 1px;
+    background: var(--gray-200);
+    margin: 16px 0;
+  }
+  .tag {
+    display: inline-block;
+    background: var(--accent2);
+    color: var(--primary);
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 20px;
+  }
+  .notice {
+    background: #fff8e1;
+    border-left: 4px solid var(--warning);
+    border-radius: 0 8px 8px 0;
+    padding: 12px 16px;
+    font-size: 14px;
+    color: #5d4037;
+    margin-bottom: 16px;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 48px 24px;
+    color: var(--gray-400);
+  }
+  .empty-state-icon { font-size: 48px; margin-bottom: 12px; display: block; }
+  .empty-state-text { font-size: 16px; }
+
+  /* ADMIN add facility form */
+  .form-row { margin-bottom: 14px; }
+  .form-row label { display: block; font-size: 14px; font-weight: 600; color: var(--gray-700); margin-bottom: 6px; }
+  .form-row input, .form-row select, .form-row textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid var(--gray-200);
+    border-radius: 8px;
+    font-size: 16px;
+    font-family: var(--font);
+  }
+  .form-row textarea { height: 80px; resize: vertical; }
+
+  @media (min-width: 480px) {
+    .menu-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== LOGIN PAGE ===== -->
+<div id="page-login" class="page active">
+  <div class="login-logo">
+    <span class="login-logo-icon">🧺</span>
+    <div class="login-logo-name">Linen Order System</div>
+    <div class="login-logo-sub">リネン注文管理システム</div>
+  </div>
+  <div class="login-card">
+    <h2>ログイン</h2>
+    <div class="form-group">
+      <label>ログインID</label>
+      <input type="text" id="login-id" placeholder="IDを入力" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>パスワード</label>
+      <input type="password" id="login-pw" placeholder="パスワードを入力" autocomplete="current-password">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">ログイン</button>
+  </div>
+</div>
+
+<!-- ===== FACILITY HOME ===== -->
+<div id="page-home" class="page">
+  <div class="header">
+    <div>
+      <div class="header-logo">Linen Order System</div>
+      <div class="header-title">ホーム</div>
+    </div>
+    <button class="header-back" onclick="doLogout()">ログアウト</button>
+  </div>
+  <div class="home-greeting">
+    <div class="home-greeting-hello">こんにちは</div>
+    <div class="home-greeting-name" id="home-facility-name">WARMING UP 様</div>
+  </div>
+  <div class="home-delivery-card">
+    <div class="home-delivery-label">📅 次回配送予定日</div>
+    <div class="home-delivery-date">2026年6月16日（火）</div>
+    <div class="home-delivery-sub">注文締め切り：6月15日（月）17:00</div>
+  </div>
+  <div class="home-menu">
+    <div class="home-menu-title">メニュー</div>
+    <div class="menu-grid">
+      <div class="menu-item" onclick="showPage('page-order')">
+        <span class="menu-item-icon">📝</span>
+        <div class="menu-item-label">リネン注文</div>
+        <div class="menu-item-sub">新規注文</div>
+      </div>
+      <div class="menu-item" onclick="showPage('page-history')">
+        <span class="menu-item-icon">📋</span>
+        <div class="menu-item-label">注文履歴</div>
+        <div class="menu-item-sub">過去の注文</div>
+      </div>
+      <div class="menu-item" onclick="showPage('page-receipts')">
+        <span class="menu-item-icon">📄</span>
+        <div class="menu-item-label">納品書一覧</div>
+        <div class="menu-item-sub">PDF閲覧</div>
+      </div>
+      <div class="menu-item" onclick="showPage('page-contact')">
+        <span class="menu-item-icon">📞</span>
+        <div class="menu-item-label">お問い合わせ</div>
+        <div class="menu-item-sub">緊急・その他</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ORDER PAGE ===== -->
+<div id="page-order" class="page">
+  <div class="header">
+    <button class="header-back" onclick="showPage('page-home')">← 戻る</button>
+    <div class="header-title">リネン注文</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="content">
+    <div class="notice">配送日：<strong>2026年6月16日（火）</strong>　締切：6月15日 17:00</div>
+
+    <!-- 前回コピー -->
+    <div class="copy-prev-card">
+      <div class="copy-prev-title">📋 前回の注文（2026年6月9日）</div>
+      <div class="copy-prev-items">
+        シーツ(137): 20枚　枕カバー: 30枚<br>
+        バスタオル: 15枚　フェイスタオル: 40枚
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="copyPrevOrder()">前回と同じ内容で注文</button>
+    </div>
+
+    <!-- 配送区分 -->
+    <div class="section-card">
+      <div class="section-card-header">🚚 配送区分</div>
+      <div class="section-card-body">
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" name="delivery-type" id="dt-both" value="both" checked>
+            <label for="dt-both">📦 納品＋回収</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" name="delivery-type" id="dt-return" value="return">
+            <label for="dt-return">♻️ 回収のみ</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 注文品目 -->
+    <div class="section-card">
+      <div class="section-card-header">🧺 注文品目</div>
+      <div class="section-card-body" id="order-items">
+        <!-- JS generated -->
+      </div>
+    </div>
+
+    <button class="btn btn-primary" onclick="goToConfirm()">注文内容を確認する →</button>
+  </div>
+</div>
+
+<!-- ===== ORDER CONFIRM ===== -->
+<div id="page-confirm" class="page">
+  <div class="header">
+    <button class="header-back" onclick="showPage('page-order')">← 修正</button>
+    <div class="header-title">注文確認</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="content">
+    <div class="section-card">
+      <div class="section-card-header">📋 注文内容確認</div>
+      <div class="section-card-body">
+        <div class="confirm-row">
+          <span class="confirm-label">配送予定日</span>
+          <span class="confirm-value">2026年6月16日（火）</span>
+        </div>
+        <div class="confirm-row">
+          <span class="confirm-label">施設名</span>
+          <span class="confirm-value">WARMING UP</span>
+        </div>
+        <div class="confirm-row">
+          <span class="confirm-label">配送区分</span>
+          <span class="confirm-badge" id="confirm-type-badge">納品＋回収</span>
+        </div>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-card-header">🧺 注文品目</div>
+      <div class="section-card-body" id="confirm-items">
+        <!-- JS generated -->
+      </div>
+    </div>
+    <div class="notice">内容をご確認のうえ、「注文を送信する」を押してください。</div>
+    <button class="btn btn-success" onclick="submitOrder()">✓ 注文を送信する</button>
+    <div class="mt-16">
+      <button class="btn btn-gray" onclick="showPage('page-order')">← 内容を修正する</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== ORDER COMPLETE ===== -->
+<div id="page-complete" class="page">
+  <div class="header">
+    <div style="width:64px"></div>
+    <div class="header-title">注文完了</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="success-page">
+    <span class="success-icon">✅</span>
+    <div class="success-title">注文が完了しました</div>
+    <div class="success-order-num">
+      注文番号
+      <span id="order-number">20260616-001</span>
+    </div>
+    <div class="success-msg">
+      ご注文を受け付けました。<br>
+      配送日：<strong>2026年6月16日（火）</strong><br>
+      ご不明な点はお問い合わせください。
+    </div>
+    <button class="btn btn-primary" onclick="showPage('page-home')">ホームに戻る</button>
+    <div class="mt-16">
+      <button class="btn btn-secondary" onclick="showPage('page-history')">注文履歴を見る</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HISTORY ===== -->
+<div id="page-history" class="page">
+  <div class="header">
+    <button class="header-back" onclick="showPage('page-home')">← 戻る</button>
+    <div class="header-title">注文履歴</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="content">
+    <div id="facility-history-list">
+      <!-- JS generated -->
+    </div>
+  </div>
+</div>
+
+<!-- ===== HISTORY DETAIL ===== -->
+<div id="page-history-detail" class="page">
+  <div class="header">
+    <button class="header-back" onclick="showPage('page-history')">← 戻る</button>
+    <div class="header-title">注文詳細</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="content" id="history-detail-body">
+    <!-- JS generated -->
+  </div>
+  <div class="content">
+    <button class="btn btn-secondary" onclick="reuseOrder()">この内容で再注文する</button>
+  </div>
+</div>
+
+<!-- ===== RECEIPTS ===== -->
+<div id="page-receipts" class="page">
+  <div class="header">
+    <button class="header-back" onclick="showPage('page-home')">← 戻る</button>
+    <div class="header-title">納品書一覧</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="content">
+    <div class="receipt-item">
+      <div class="receipt-info">
+        <div class="receipt-date">2026年6月9日（火）</div>
+        <div class="receipt-num">納品書番号：N-20260609-003</div>
+      </div>
+      <div class="receipt-actions">
+        <button class="receipt-btn" onclick="viewPDF()">閲覧</button>
+        <button class="receipt-btn" onclick="downloadPDF()">DL</button>
+      </div>
+    </div>
+    <div class="receipt-item">
+      <div class="receipt-info">
+        <div class="receipt-date">2026年5月26日（火）</div>
+        <div class="receipt-num">納品書番号：N-20260526-002</div>
+      </div>
+      <div class="receipt-actions">
+        <button class="receipt-btn" onclick="viewPDF()">閲覧</button>
+        <button class="receipt-btn" onclick="downloadPDF()">DL</button>
+      </div>
+    </div>
+    <div class="receipt-item">
+      <div class="receipt-info">
+        <div class="receipt-date">2026年5月19日（火）</div>
+        <div class="receipt-num">納品書番号：N-20260519-001</div>
+      </div>
+      <div class="receipt-actions">
+        <button class="receipt-btn" onclick="viewPDF()">閲覧</button>
+        <button class="receipt-btn" onclick="downloadPDF()">DL</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== CONTACT ===== -->
+<div id="page-contact" class="page">
+  <div class="header">
+    <button class="header-back" onclick="showPage('page-home')">← 戻る</button>
+    <div class="header-title">お問い合わせ</div>
+    <div style="width:64px"></div>
+  </div>
+  <div class="content">
+    <div class="section-card">
+      <div class="section-card-header">📣 お問い合わせ種別</div>
+      <div class="section-card-body">
+        <div class="contact-type">
+          <button class="contact-type-btn active" onclick="selectContact(this,'shortage')">
+            <span class="contact-type-icon">🚨</span>
+            <span class="contact-type-label">リネン不足</span>
+          </button>
+          <button class="contact-type-btn" onclick="selectContact(this,'urgent')">
+            <span class="contact-type-icon">🚚</span>
+            <span class="contact-type-label">緊急配送</span>
+          </button>
+          <button class="contact-type-btn" onclick="selectContact(this,'other')">
+            <span class="contact-type-icon">💬</span>
+            <span class="contact-type-label">その他</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <div class="section-card">
+      <div class="section-card-header">✏️ 内容を入力</div>
+      <div class="section-card-body">
+        <div class="form-group">
+          <label>担当者名</label>
+          <input type="text" id="contact-name" placeholder="例：山田 太郎">
+        </div>
+        <div class="form-group">
+          <label>お問い合わせ内容</label>
+          <textarea id="contact-body" rows="5" placeholder="詳しい内容をご記入ください。&#10;&#10;例：シーツが10枚不足しています。本日中に追加配送をお願いしたいです。" style="padding:14px;font-size:16px;border:2px solid #e2e8f0;border-radius:10px;width:100%;font-family:inherit;resize:vertical;"></textarea>
+        </div>
+        <div class="form-group">
+          <label>ご連絡先電話番号（緊急の場合）</label>
+          <input type="tel" id="contact-tel" placeholder="例：03-1234-5678">
+        </div>
+      </div>
+    </div>
+    <button class="btn btn-primary" onclick="sendContact()">📤 管理者へ送信する</button>
+  </div>
+</div>
+
+<!-- ===== ADMIN PAGE ===== -->
+<div id="page-admin" class="page">
+  <div class="admin-header">
+    <div>
+      <div style="font-size:12px;opacity:0.6;letter-spacing:1px">ADMIN</div>
+      <div class="admin-header-title">管理者画面</div>
+    </div>
+    <button style="background:rgba(255,255,255,0.15);border:none;color:white;padding:8px 14px;border-radius:8px;font-size:14px;cursor:pointer;font-weight:700;" onclick="doLogout()">ログアウト</button>
+  </div>
+  <div class="admin-tabs">
+    <div class="admin-tab active" onclick="switchAdminTab(0)">施設管理</div>
+    <div class="admin-tab" onclick="switchAdminTab(1)">注文管理</div>
+    <div class="admin-tab" onclick="switchAdminTab(2)">配送一覧</div>
+    <div class="admin-tab" onclick="switchAdminTab(3)">配送順</div>
+    <div class="admin-tab" onclick="switchAdminTab(4)">準備集計</div>
+    <div class="admin-tab" onclick="switchAdminTab(5)">納品書</div>
+  </div>
+
+  <!-- 施設管理 -->
+  <div class="admin-content active" id="admin-tab-0">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:700;color:#334155;">登録施設一覧</div>
+      <button class="btn btn-primary btn-inline btn-sm" onclick="openAddFacility()">＋ 施設追加</button>
+    </div>
+    <div id="facilities-list">
+      <!-- JS generated -->
+    </div>
+  </div>
+
+  <!-- 注文管理 -->
+  <div class="admin-content" id="admin-tab-1">
+    <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+      <button class="btn btn-primary btn-inline btn-sm filter-btn active-filter" onclick="filterOrders('all')">すべて</button>
+      <button class="btn btn-secondary btn-inline btn-sm filter-btn" onclick="filterOrders('new')">未対応</button>
+      <button class="btn btn-secondary btn-inline btn-sm filter-btn" onclick="filterOrders('processing')">対応中</button>
+      <button class="btn btn-secondary btn-inline btn-sm filter-btn" onclick="filterOrders('done')">完了</button>
+    </div>
+    <div id="orders-list">
+      <!-- JS generated -->
+    </div>
+  </div>
+
+  <!-- 配送一覧 -->
+  <div class="admin-content" id="admin-tab-2">
+    <div class="delivery-date-select">
+      <label>配送日</label>
+      <input type="date" value="2026-06-16" id="delivery-date">
+      <button class="btn btn-primary btn-inline btn-sm" onclick="loadDelivery()">表示</button>
+    </div>
+    <div class="delivery-list-card">
+      <div style="padding:14px 18px;background:var(--gray-100);font-size:13px;font-weight:700;color:var(--gray-600);" id="delivery-list-header">
+        配送日を選択してください
+      </div>
+      <div id="delivery-list-body">
+        <!-- JS generated -->
+      </div>
+    </div>
+    <button class="btn btn-secondary" onclick="printDelivery()">🖨️ 印刷する</button>
+  </div>
+
+  <!-- 配送順管理 -->
+  <div class="admin-content" id="admin-tab-3">
+    <div class="notice">ドラッグ＆ドロップで配送順を変更できます</div>
+    <div id="drag-list">
+      <div class="drag-item" draggable="true" data-id="1">
+        <span class="drag-handle">☰</span>
+        <div class="drag-label">WARMING UP</div>
+        <div class="drag-day">火曜日</div>
+      </div>
+      <div class="drag-item" draggable="true" data-id="2">
+        <span class="drag-handle">☰</span>
+        <div class="drag-label">さくら苑</div>
+        <div class="drag-day">火曜日</div>
+      </div>
+      <div class="drag-item" draggable="true" data-id="3">
+        <span class="drag-handle">☰</span>
+        <div class="drag-label">緑ヶ丘ホーム</div>
+        <div class="drag-day">木曜日</div>
+      </div>
+      <div class="drag-item" draggable="true" data-id="4">
+        <span class="drag-handle">☰</span>
+        <div class="drag-label">ひかり苑</div>
+        <div class="drag-day">火曜日</div>
+      </div>
+    </div>
+    <div class="mt-16">
+      <button class="btn btn-primary" onclick="saveDragOrder()">✓ 配送順を保存する</button>
+    </div>
+    <div class="notice" style="margin-top:16px;">
+      🗺️ 将来的にGoogle Mapルート最適化と連携予定
+    </div>
+  </div>
+
+  <!-- 準備集計 -->
+  <div class="admin-content" id="admin-tab-4">
+    <div class="delivery-date-select">
+      <label>集計日</label>
+      <input type="date" value="2026-06-16" id="summary-date">
+      <button class="btn btn-primary btn-inline btn-sm" onclick="loadSummary()">集計</button>
+    </div>
+    <div style="font-size:14px;font-weight:700;color:var(--gray-600);margin-bottom:12px;" id="summary-title">
+      集計日を選択してください
+    </div>
+    <div class="summary-table" id="summary-table-body">
+      <!-- JS generated -->
+    </div>
+    <div class="mt-16">
+      <button class="btn btn-secondary" onclick="printSummary()">🖨️ 印刷する</button>
+    </div>
+  </div>
+
+  <!-- 納品書管理 -->
+  <div class="admin-content" id="admin-tab-5">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <div style="font-size:16px;font-weight:700;color:#334155;">納品書一覧</div>
+      <button class="btn btn-primary btn-inline btn-sm" onclick="generateReceipt()">＋ 納品書発行</button>
+    </div>
+    <div class="receipt-item">
+      <div class="receipt-info">
+        <div class="receipt-date">WARMING UP｜2026年6月9日</div>
+        <div class="receipt-num">N-20260609-003</div>
+      </div>
+      <div class="receipt-actions">
+        <button class="receipt-btn" onclick="viewPDF()">閲覧</button>
+        <button class="receipt-btn" onclick="downloadPDF()">再発行</button>
+      </div>
+    </div>
+    <div class="receipt-item">
+      <div class="receipt-info">
+        <div class="receipt-date">さくら苑｜2026年6月9日</div>
+        <div class="receipt-num">N-20260609-002</div>
+      </div>
+      <div class="receipt-actions">
+        <button class="receipt-btn" onclick="viewPDF()">閲覧</button>
+        <button class="receipt-btn" onclick="downloadPDF()">再発行</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: ADD/EDIT FACILITY ===== -->
+<div class="modal-overlay" id="modal-facility">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-facility')">×</button>
+    <div class="modal-title" id="modal-facility-title">施設追加</div>
+    <div class="form-row">
+      <label>施設名 *</label>
+      <input type="text" id="fac-name" placeholder="例：WARMING UP">
+    </div>
+    <div class="form-row">
+      <label>ログインID *</label>
+      <input type="text" id="fac-id" placeholder="例：warmingup">
+    </div>
+    <div class="form-row">
+      <label>パスワード *</label>
+      <input type="password" id="fac-pw" placeholder="パスワードを設定">
+    </div>
+    <div class="form-row">
+      <label>住所</label>
+      <input type="text" id="fac-address" placeholder="例：東京都渋谷区...">
+    </div>
+    <div class="form-row">
+      <label>電話番号</label>
+      <input type="tel" id="fac-tel" placeholder="例：03-1234-5678">
+    </div>
+    <div class="form-row">
+      <label>担当者名</label>
+      <input type="text" id="fac-contact" placeholder="例：山田 太郎">
+    </div>
+    <div class="form-row">
+      <label>メールアドレス</label>
+      <input type="email" id="fac-email" placeholder="例：info@warming-up.jp">
+    </div>
+    <div class="form-row">
+      <label>配送曜日</label>
+      <select id="fac-day">
+        <option>月曜日</option><option>火曜日</option><option>水曜日</option>
+        <option>木曜日</option><option>金曜日</option><option>土曜日</option>
+      </select>
+    </div>
+    <div class="form-row">
+      <label>配送ルート順</label>
+      <input type="number" id="fac-route" placeholder="例：1" min="1">
+    </div>
+    <div class="form-row">
+      <label>備考</label>
+      <textarea id="fac-note" placeholder="特記事項など"></textarea>
+    </div>
+    <button class="btn btn-primary" onclick="saveFacility()">✓ 保存する</button>
+    <div class="mt-16">
+      <button class="btn btn-gray" onclick="closeModal('modal-facility')">キャンセル</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: ORDER DETAIL ===== -->
+<div class="modal-overlay" id="modal-order-detail">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-order-detail')">×</button>
+    <div class="modal-title">注文詳細</div>
+    <div class="confirm-row"><span class="confirm-label">注文番号</span><span class="confirm-value">20260616-001</span></div>
+    <div class="confirm-row"><span class="confirm-label">施設名</span><span class="confirm-value">WARMING UP</span></div>
+    <div class="confirm-row"><span class="confirm-label">配送日</span><span class="confirm-value">2026年6月16日</span></div>
+    <div class="divider"></div>
+    <div class="confirm-row"><span class="confirm-label">シーツ（137）</span><span class="confirm-value">20枚</span></div>
+    <div class="confirm-row"><span class="confirm-label">枕カバー</span><span class="confirm-value">30枚</span></div>
+    <div class="confirm-row"><span class="confirm-label">バスタオル</span><span class="confirm-value">15枚</span></div>
+    <div class="confirm-row"><span class="confirm-label">フェイスタオル</span><span class="confirm-value">40枚</span></div>
+    <div class="mt-16">
+      <button class="btn btn-success" onclick="closeModal('modal-order-detail')">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ===== JSONBIN CONFIG =====
+const JSONBIN_KEY = '$2a$10$xopawUKPa.2MV76.BGLZtehG8EauPnBwXLLyCgXqw/H5NfvD.yuOq';
+const JSONBIN_BIN = '6a264fa6da38895dfe97bfef';
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+
+// ===== ADMIN =====
+const ADMIN_ID = 'no football';
+const ADMIN_PW = '2001';
+
+// ===== SESSION =====
+let currentUser = null; // { id, name, role: 'admin'|'facility' }
+
+// ===== APP STATE =====
+let appData = { facilities: [], orders: [], deliveries: [], invoices: [] };
+let appFacilities = []; // appData.facilitiesへの参照用
+let appOrders = [];     // appData.ordersへの参照用
+
+const ITEMS = [
+  { id: 'sheet137', name: 'シーツ（137）', qty: 0 },
+  { id: 'sheetS',   name: 'シーツ（S）',   qty: 0 },
+  { id: 'sheetW',   name: 'シーツ（W）',   qty: 0 },
+  { id: 'pillowcase', name: '枕カバー',    qty: 0 },
+  { id: 'cover',    name: '包布',          qty: 0 },
+  { id: 'yukata',   name: '浴衣',          qty: 0 },
+  { id: 'bath',     name: 'バスタオル',    qty: 0 },
+  { id: 'face',     name: 'フェイスタオル', qty: 0 },
+];
+
+let orderCounter = 1;
+let editingFacilityId = null;
+let currentOrderFilter = 'all';
+
+// ===== JSONBIN API =====
+async function binGet() {
+  const res = await fetch(`${JSONBIN_BASE}/b/${JSONBIN_BIN}/latest`, {
+    headers: { 'X-Master-Key': JSONBIN_KEY }
+  });
+  if (!res.ok) throw new Error('JSONBin取得失敗: ' + res.status);
+  const data = await res.json();
+  return data.record;
+}
+
+async function binSet(record) {
+  const res = await fetch(`${JSONBIN_BASE}/b/${JSONBIN_BIN}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', 'X-Master-Key': JSONBIN_KEY },
+    body: JSON.stringify(record)
+  });
+  if (!res.ok) throw new Error('JSONBin保存失敗: ' + res.status);
+  return await res.json();
+}
+
+async function loadData() {
+  try {
+    const data = await binGet();
+    appData = {
+      facilities: data.facilities || [],
+      orders:     data.orders     || [],
+      deliveries: data.deliveries || [],
+      invoices:   data.invoices   || [],
+    };
+    appFacilities = appData.facilities;
+    appOrders     = appData.orders;
+  } catch(e) {
+    console.error('データ読み込みエラー:', e);
+    showToast('データ読み込みに失敗しました', 'error');
+  }
+}
+
+async function saveData() {
+  try {
+    await binSet(appData);
+  } catch(e) {
+    showToast('保存に失敗しました: ' + e.message, 'error');
+  }
+}
+
+// ===== TOAST =====
+function showToast(msg, type = 'success') {
+  let t = document.getElementById('toast');
+  if (!t) {
+    t = document.createElement('div');
+    t.id = 'toast';
+    t.style.cssText = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);padding:12px 20px;border-radius:10px;font-size:15px;font-weight:700;z-index:9999;max-width:90%;text-align:center;transition:opacity 0.3s;pointer-events:none;';
+    document.body.appendChild(t);
+  }
+  const colors = { success: '#27ae60', error: '#e74c3c', info: '#1a5f7a' };
+  t.style.background = colors[type] || colors.success;
+  t.style.color = 'white';
+  t.style.opacity = '1';
+  t.textContent = msg;
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => { t.style.opacity = '0'; }, 2500);
+}
+
+// ===== PAGE NAV =====
+function showPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ===== LOGIN =====
+async function doLogin() {
+  const id = document.getElementById('login-id').value.trim();
+  const pw = document.getElementById('login-pw').value.trim();
+
+  if (!id || !pw) { showToast('IDとパスワードを入力してください', 'error'); return; }
+
+  // 管理者チェック
+  if (id === ADMIN_ID && pw === ADMIN_PW) {
+    currentUser = { id, name: '管理者', role: 'admin' };
+    showToast('ログインしました');
+    showPage('page-admin');
+    renderFacilities();
+    renderOrders('all');
+    return;
+  }
+
+  // 施設ログイン — JSONBinから確認
+  showToast('確認中...', 'info');
+  try {
+    await loadData();
+    const facility = appFacilities.find(f => f.id === id && f.pw === pw);
+    if (!facility) {
+      showToast('IDまたはパスワードが正しくありません', 'error');
+      return;
+    }
+    currentUser = { id: facility.id, name: facility.name, role: 'facility', facility };
+    showToast(`${facility.name} でログインしました`);
+    renderFacilityHome();
+    showPage('page-home');
+  } catch(e) {
+    showToast('接続エラーが発生しました', 'error');
+  }
+}
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('login-id').value = '';
+  document.getElementById('login-pw').value = '';
+  showPage('page-login');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('login-pw').addEventListener('keydown', e => {
+    if (e.key === 'Enter') doLogin();
+  });
+});
+
+// ===== FACILITY HOME =====
+function renderFacilityHome() {
+  if (!currentUser || currentUser.role !== 'facility') return;
+  const f = currentUser.facility;
+
+  // 施設名表示
+  const nameEl = document.getElementById('home-facility-name');
+  if (nameEl) nameEl.textContent = f.name + ' 様';
+
+  // 前回注文を取得
+  const myOrders = appOrders
+    .filter(o => o.facilityId === f.id)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+
+  const prevCard = document.querySelector('.copy-prev-card');
+  if (myOrders.length > 0) {
+    const prev = myOrders[0];
+    const ITEMS_LABEL = { sheet137:'シーツ(137)', sheetS:'シーツ(S)', sheetW:'シーツ(W)', pillowcase:'枕カバー', cover:'包布', yukata:'浴衣', bath:'バスタオル', face:'フェイスタオル' };
+    const itemsText = Object.entries(prev.items || {}).filter(([,v])=>v>0).map(([k,v])=>`${ITEMS_LABEL[k]||k}: ${v}枚`).join('　');
+    const prevDate = prev.deliveryDate.replace(/-/g, '年').replace(/-/, '月') + '日';
+    if (prevCard) {
+      prevCard.style.display = '';
+      const titleEl = prevCard.querySelector('.copy-prev-title');
+      if (titleEl) titleEl.textContent = `📋 前回の注文（${prevDate}）`;
+      const itemsEl = prevCard.querySelector('.copy-prev-items');
+      if (itemsEl) itemsEl.textContent = itemsText || '（品目なし）';
+    }
+    // 前回注文データをセット
+    window._prevOrderItems = prev.items || {};
+  } else {
+    if (prevCard) prevCard.style.display = 'none';
+    window._prevOrderItems = {};
+  }
+
+  // 履歴描画
+  renderFacilityHistory();
+}
+
+// ===== FACILITY HISTORY =====
+function renderFacilityHistory() {
+  const container = document.getElementById('facility-history-list');
+  if (!container || !currentUser) return;
+  const myOrders = appOrders
+    .filter(o => o.facilityId === currentUser.id)
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  const ITEMS_LABEL = { sheet137:'シーツ(137)', sheetS:'シーツ(S)', sheetW:'シーツ(W)', pillowcase:'枕カバー', cover:'包布', yukata:'浴衣', bath:'バスタオル', face:'フェイスタオル' };
+  const statusLabel = { new:'受付済', processing:'対応中', done:'完了' };
+  if (myOrders.length === 0) {
+    container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📋</span><div class="empty-state-text">注文履歴がありません</div></div>';
+    return;
+  }
+  container.innerHTML = myOrders.map(o => {
+    const itemsText = Object.entries(o.items || {}).filter(([,v])=>v>0).map(([k,v])=>`${ITEMS_LABEL[k]||k}: ${v}枚`).join('　');
+    const typeLabel = o.type === 'both' ? '納品＋回収' : '回収のみ';
+    const [y,m,d] = o.deliveryDate.split('-');
+    return `<div class="history-item" onclick="showHistoryDetail('${o.id}')">
+      <div class="history-item-header">
+        <div class="history-date">${y}年${m}月${d}日</div>
+        <span class="history-badge">${typeLabel}</span>
+      </div>
+      <div class="history-summary">${itemsText || '（品目なし）'}</div>
+      <div style="text-align:right;margin-top:6px;"><span class="tag">${statusLabel[o.status]||o.status}</span></div>
+    </div>`;
+  }).join('');
+}
+
+let viewingOrderId = null;
+function showHistoryDetail(orderId) {
+  viewingOrderId = orderId;
+  const o = appOrders.find(x => x.id === orderId);
+  if (!o) return;
+  const ITEMS_LABEL = { sheet137:'シーツ（137）', sheetS:'シーツ（S）', sheetW:'シーツ（W）', pillowcase:'枕カバー', cover:'包布', yukata:'浴衣', bath:'バスタオル', face:'フェイスタオル' };
+  const statusLabel = { new:'受付済', processing:'対応中', done:'完了' };
+  const typeLabel = o.type === 'both' ? '納品＋回収' : '回収のみ';
+  const [y,m,d] = o.deliveryDate.split('-');
+  const container = document.getElementById('history-detail-body');
+  if (container) {
+    container.innerHTML = `
+      <div class="section-card">
+        <div class="section-card-header">📋 注文情報</div>
+        <div class="section-card-body">
+          <div class="confirm-row"><span class="confirm-label">注文番号</span><span class="confirm-value">${o.id}</span></div>
+          <div class="confirm-row"><span class="confirm-label">配送日</span><span class="confirm-value">${y}年${m}月${d}日</span></div>
+          <div class="confirm-row"><span class="confirm-label">配送区分</span><span class="confirm-badge">${typeLabel}</span></div>
+          <div class="confirm-row"><span class="confirm-label">ステータス</span><span class="tag">${statusLabel[o.status]||o.status}</span></div>
+        </div>
+      </div>
+      <div class="section-card">
+        <div class="section-card-header">🧺 注文品目</div>
+        <div class="section-card-body">
+          ${Object.entries(o.items||{}).filter(([,v])=>v>0).map(([k,v])=>`<div class="confirm-row"><span class="confirm-label">${ITEMS_LABEL[k]||k}</span><span class="confirm-value">${v}枚</span></div>`).join('')}
+        </div>
+      </div>`;
+  }
+  showPage('page-history-detail');
+}
+
+function reuseOrder() {
+  const o = appOrders.find(x => x.id === viewingOrderId);
+  if (!o) return;
+  window._prevOrderItems = o.items || {};
+  copyPrevOrder();
+  showPage('page-order');
+}
+
+// ===== ORDER ITEMS =====
+function renderOrderItems() {
+  const container = document.getElementById('order-items');
+  container.innerHTML = ITEMS.map(item => `
+    <div class="qty-row">
+      <div class="qty-name">${item.name}</div>
+      <div class="qty-control">
+        <button class="qty-btn" onclick="changeQty('${item.id}', -1)">−</button>
+        <input class="qty-input" type="number" id="qty-${item.id}" value="${item.qty}" min="0"
+          onchange="setQty('${item.id}', this.value)">
+        <button class="qty-btn" onclick="changeQty('${item.id}', 1)">＋</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function changeQty(id, delta) {
+  const item = ITEMS.find(i => i.id === id);
+  item.qty = Math.max(0, item.qty + delta);
+  const input = document.getElementById('qty-' + id);
+  if (input) input.value = item.qty;
+}
+
+function setQty(id, val) {
+  const item = ITEMS.find(i => i.id === id);
+  item.qty = Math.max(0, parseInt(val) || 0);
+}
+
+function copyPrevOrder() {
+  const prev = window._prevOrderItems || {};
+  ITEMS.forEach(item => { item.qty = prev[item.id] || 0; });
+  renderOrderItems();
+  document.querySelector('.copy-prev-card').style.display = 'none';
+}
+
+// ===== CONFIRM =====
+function goToConfirm() {
+  const ordered = ITEMS.filter(i => i.qty > 0);
+  if (ordered.length === 0) { showToast('注文品目を入力してください', 'error'); return; }
+  const typeEl = document.querySelector('input[name="delivery-type"]:checked');
+  const typeName = typeEl.value === 'both' ? '納品＋回収' : '回収のみ';
+  document.getElementById('confirm-type-badge').textContent = typeName;
+  const container = document.getElementById('confirm-items');
+  container.innerHTML = ordered.map(i => `
+    <div class="confirm-row">
+      <span class="confirm-label">${i.name}</span>
+      <span class="confirm-value">${i.qty}枚</span>
+    </div>
+  `).join('');
+  showPage('page-confirm');
+}
+
+// ===== SUBMIT ORDER =====
+async function submitOrder() {
+  if (!currentUser) return;
+  const typeEl = document.querySelector('input[name="delivery-type"]:checked');
+  const now = new Date();
+  const dateStr = now.toISOString().slice(0,10).replace(/-/g,'');
+  const count = String(++orderCounter).padStart(3,'0');
+  const orderId = `${dateStr}-${count}`;
+
+  const items = {};
+  ITEMS.forEach(i => { if (i.qty > 0) items[i.id] = i.qty; });
+
+  // 配送日（施設の次回配送曜日から算出 — ここは仮で7日後）
+  const deliveryDate = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0,10);
+
+  const newOrder = {
+    id: orderId,
+    facilityId: currentUser.id,
+    facilityName: currentUser.name,
+    deliveryDate,
+    type: typeEl ? typeEl.value : 'both',
+    items,
+    status: 'new',
+    createdAt: now.toISOString(),
+  };
+
+  appOrders.push(newOrder);
+  appData.orders = appOrders;
+
+  showToast('注文を送信中...', 'info');
+  await saveData();
+
+  document.getElementById('order-number').textContent = orderId;
+  ITEMS.forEach(i => i.qty = 0);
+  renderOrderItems();
+  document.querySelector('.copy-prev-card').style.display = '';
+  renderFacilityHistory();
+  showPage('page-complete');
+  showToast('注文を送信しました');
+}
+
+// ===== CONTACT =====
+let selectedContactType = 'shortage';
+function selectContact(btn, type) {
+  document.querySelectorAll('.contact-type-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  selectedContactType = type;
+}
+function sendContact() {
+  const body = document.getElementById('contact-body').value.trim();
+  if (!body) { showToast('内容を入力してください', 'error'); return; }
+  showToast('お問い合わせを送信しました');
+  document.getElementById('contact-name').value = '';
+  document.getElementById('contact-body').value = '';
+  document.getElementById('contact-tel').value = '';
+  showPage('page-home');
+}
+
+// ===== RECEIPT =====
+function viewPDF() { alert('【準備中】本番ではPDFが表示されます'); }
+function downloadPDF() { alert('【準備中】本番ではPDFがダウンロードされます'); }
+function generateReceipt() { alert('【準備中】納品書を発行します'); }
+
+// ===== ADMIN TABS =====
+function switchAdminTab(idx) {
+  document.querySelectorAll('.admin-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  document.querySelectorAll('.admin-content').forEach((c, i) => c.classList.toggle('active', i === idx));
+  window.scrollTo(0, 0);
+  if (idx === 0) renderFacilities();
+  if (idx === 1) renderOrders(currentOrderFilter);
+  if (idx === 3) renderDragList();
+}
+
+// ===== ADMIN: FACILITIES =====
+function openAddFacility() {
+  editingFacilityId = null;
+  document.getElementById('modal-facility-title').textContent = '施設追加';
+  ['fac-name','fac-id','fac-pw','fac-address','fac-tel','fac-contact','fac-email','fac-note'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('fac-day').value = '火曜日';
+  document.getElementById('fac-route').value = '';
+  document.getElementById('modal-facility').classList.add('open');
+}
+
+function openEditFacility(id) {
+  const f = appFacilities.find(x => x.id === id);
+  if (!f) return;
+  editingFacilityId = id;
+  document.getElementById('modal-facility-title').textContent = '施設編集';
+  document.getElementById('fac-name').value = f.name || '';
+  document.getElementById('fac-id').value = f.id || '';
+  document.getElementById('fac-pw').value = f.pw || '';
+  document.getElementById('fac-address').value = f.address || '';
+  document.getElementById('fac-tel').value = f.tel || '';
+  document.getElementById('fac-contact').value = f.contact || '';
+  document.getElementById('fac-email').value = f.email || '';
+  document.getElementById('fac-day').value = f.deliveryDay || '火曜日';
+  document.getElementById('fac-route').value = f.routeOrder || '';
+  document.getElementById('fac-note').value = f.note || '';
+  document.getElementById('modal-facility').classList.add('open');
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('open');
+}
+
+async function saveFacility() {
+  const name = document.getElementById('fac-name').value.trim();
+  const fid  = document.getElementById('fac-id').value.trim();
+  const pw   = document.getElementById('fac-pw').value.trim();
+  if (!name || !fid || !pw) { showToast('施設名・ID・パスワードは必須です', 'error'); return; }
+
+  const obj = {
+    id: fid, name, pw,
+    address:     document.getElementById('fac-address').value.trim(),
+    tel:         document.getElementById('fac-tel').value.trim(),
+    contact:     document.getElementById('fac-contact').value.trim(),
+    email:       document.getElementById('fac-email').value.trim(),
+    deliveryDay: document.getElementById('fac-day').value,
+    routeOrder:  parseInt(document.getElementById('fac-route').value) || 99,
+    note:        document.getElementById('fac-note').value.trim(),
+  };
+
+  if (editingFacilityId) {
+    const idx = appFacilities.findIndex(x => x.id === editingFacilityId);
+    if (idx >= 0) appFacilities[idx] = obj;
+  } else {
+    if (appFacilities.find(x => x.id === fid)) { showToast('このIDは既に使われています', 'error'); return; }
+    appFacilities.push(obj);
+  }
+  appData.facilities = appFacilities;
+  showToast('保存中...', 'info');
+  await saveData();
+  renderFacilities();
+  closeModal('modal-facility');
+  showToast(editingFacilityId ? '施設情報を更新しました' : '施設を追加しました');
+}
+
+async function deleteFacility(id) {
+  const f = appFacilities.find(x => x.id === id);
+  if (!f) return;
+  if (!confirm(`「${f.name}」を削除しますか？`)) return;
+  appFacilities = appFacilities.filter(x => x.id !== id);
+  appData.facilities = appFacilities;
+  await saveData();
+  renderFacilities();
+  showToast('施設を削除しました');
+}
+
+function renderFacilities() {
+  const container = document.getElementById('facilities-list');
+  if (!container) return;
+  if (appFacilities.length === 0) {
+    container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">🏢</span><div class="empty-state-text">施設が登録されていません<br><small style="font-size:13px;margin-top:8px;display:block;">「＋ 施設追加」から登録してください</small></div></div>';
+    return;
+  }
+  container.innerHTML = [...appFacilities].sort((a,b) => (a.routeOrder||99)-(b.routeOrder||99)).map(f => `
+    <div class="facility-card">
+      <div class="facility-info">
+        <div class="facility-name">${f.name}</div>
+        <div class="facility-meta">ID: ${f.id}　配送曜日: ${f.deliveryDay}　ルート: ${f.routeOrder}番</div>
+      </div>
+      <div class="facility-actions">
+        <button class="facility-edit-btn" onclick="openEditFacility('${f.id}')">編集</button>
+        <button class="facility-del-btn" onclick="deleteFacility('${f.id}')">削除</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===== ADMIN: ORDERS =====
+function filterOrders(status) {
+  currentOrderFilter = status;
+  document.querySelectorAll('#admin-tab-1 .filter-btn').forEach(b => b.classList.remove('active-filter'));
+  event.target.classList.add('active-filter');
+  renderOrders(status);
+}
+
+async function updateOrderStatus(orderId, status) {
+  const order = appOrders.find(o => o.id === orderId);
+  if (!order) return;
+  order.status = status;
+  appData.orders = appOrders;
+  await saveData();
+  renderOrders(currentOrderFilter);
+  const labels = { new:'未対応', processing:'対応中', done:'完了' };
+  showToast(`「${labels[status]}」に変更しました`);
+}
+
+function renderOrders(filter = 'all') {
+  const container = document.getElementById('orders-list');
+  if (!container) return;
+  let list = [...appOrders].sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+  if (filter !== 'all') list = list.filter(o => o.status === filter);
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">📋</span><div class="empty-state-text">注文がありません</div></div>';
+    return;
+  }
+  const ITEMS_LABEL = { sheet137:'シーツ(137)', sheetS:'シーツ(S)', sheetW:'シーツ(W)', pillowcase:'枕カバー', cover:'包布', yukata:'浴衣', bath:'バスタオル', face:'フェイスタオル' };
+  container.innerHTML = list.map(o => {
+    const sc = { new:'status-new', processing:'status-processing', done:'status-done' }[o.status];
+    const sl = { new:'未対応', processing:'対応中', done:'完了' }[o.status];
+    const tl = o.type === 'both' ? '納品＋回収' : '回収のみ';
+    const it = Object.entries(o.items||{}).filter(([,v])=>v>0).map(([k,v])=>`${ITEMS_LABEL[k]||k}:${v}枚`).join('　');
+    const btns = o.status === 'new'
+      ? `<button class="order-action-btn" style="background:#cce5ff;color:#004085;" onclick="updateOrderStatus('${o.id}','processing')">対応中へ</button>
+         <button class="order-action-btn" style="background:#d4edda;color:#155724;" onclick="updateOrderStatus('${o.id}','done')">完了へ</button>`
+      : o.status === 'processing'
+      ? `<button class="order-action-btn" style="background:#d4edda;color:#155724;" onclick="updateOrderStatus('${o.id}','done')">完了へ</button>
+         <button class="order-action-btn" style="background:#fff3cd;color:#856404;" onclick="updateOrderStatus('${o.id}','new')">未対応に戻す</button>`
+      : `<button class="order-action-btn" style="background:#f8f9fa;color:#6c757d;" onclick="updateOrderStatus('${o.id}','processing')">対応中に戻す</button>`;
+    return `<div class="order-card">
+      <div class="order-card-header"><div class="order-facility">${o.facilityName}</div><span class="status-badge ${sc}">${sl}</span></div>
+      <div class="order-meta">注文番号: ${o.id}　配送日: ${o.deliveryDate}　${tl}</div>
+      <div class="order-items">${it||'（品目なし）'}</div>
+      <div class="order-actions">${btns}</div>
+    </div>`;
+  }).join('');
+}
+
+// ===== ADMIN: DELIVERY =====
+function loadDelivery() {
+  const date = document.getElementById('delivery-date').value;
+  if (!date) { showToast('日付を選択してください', 'error'); return; }
+  const ITEMS_LABEL = { sheet137:'シーツ(137)', sheetS:'シーツ(S)', sheetW:'シーツ(W)', pillowcase:'枕カバー', cover:'包布', yukata:'浴衣', bath:'バスタオル', face:'フェイスタオル' };
+  const list = appOrders.filter(o => o.deliveryDate === date);
+  const header = document.getElementById('delivery-list-header');
+  const container = document.getElementById('delivery-list-body');
+  const [y,m,d] = date.split('-');
+  const days = ['日','月','火','水','木','金','土'];
+  const dObj = new Date(date);
+  header.textContent = `${y}年${m}月${d}日（${days[dObj.getDay()]}）配送一覧　計${list.length}件`;
+  if (list.length === 0) {
+    container.innerHTML = '<div class="empty-state"><span class="empty-state-icon">🚚</span><div class="empty-state-text">この日の配送はありません</div></div>';
+    return;
+  }
+  const fOrder = {};
+  appFacilities.forEach(f => { fOrder[f.id] = f.routeOrder || 99; });
+  list.sort((a,b) => (fOrder[a.facilityId]||99)-(fOrder[b.facilityId]||99));
+  container.innerHTML = list.map((o,i) => {
+    const tl = o.type === 'both' ? '納品＋回収' : '回収のみ';
+    const it = Object.entries(o.items||{}).filter(([,v])=>v>0).map(([k,v])=>`${ITEMS_LABEL[k]||k}:${v}`).join('　');
+    return `<div class="delivery-list-row">
+      <div class="delivery-order-num">${i+1}</div>
+      <div><div class="delivery-facility-name">${o.facilityName}</div>
+      <div class="delivery-type">${tl}　${it}</div></div>
+    </div>`;
+  }).join('');
+}
+function printDelivery() { window.print(); }
+
+// ===== ADMIN: SUMMARY =====
+function loadSummary() {
+  const date = document.getElementById('summary-date').value;
+  if (!date) { showToast('日付を選択してください', 'error'); return; }
+  const ITEMS_LABEL = { sheet137:'シーツ（137）', sheetS:'シーツ（S）', sheetW:'シーツ（W）', pillowcase:'枕カバー', cover:'包布', yukata:'浴衣', bath:'バスタオル', face:'フェイスタオル' };
+  const list = appOrders.filter(o => o.deliveryDate === date && o.type === 'both');
+  const totals = {};
+  list.forEach(o => Object.entries(o.items||{}).forEach(([k,v]) => { totals[k] = (totals[k]||0)+v; }));
+  const [y,m,d] = date.split('-');
+  document.getElementById('summary-title').textContent = `${y}年${m}月${d}日　準備数集計`;
+  const allItems = ['sheet137','sheetS','sheetW','pillowcase','cover','yukata','bath','face'];
+  document.getElementById('summary-table-body').innerHTML = allItems.map(k => `
+    <div class="summary-row">
+      <span class="summary-item">${ITEMS_LABEL[k]}</span>
+      <div><span class="summary-qty">${totals[k]||0}</span><span class="summary-unit"> 枚</span></div>
+    </div>`).join('');
+}
+function printSummary() { window.print(); }
+
+// ===== ADMIN: DRAG & DROP =====
+let dragEl = null;
+function renderDragList() {
+  const list = document.getElementById('drag-list');
+  if (!list) return;
+  const sorted = [...appFacilities].sort((a,b) => (a.routeOrder||99)-(b.routeOrder||99));
+  list.innerHTML = sorted.map(f => `
+    <div class="drag-item" draggable="true" data-id="${f.id}">
+      <span class="drag-handle">☰</span>
+      <div class="drag-label">${f.name}</div>
+      <div class="drag-day">${f.deliveryDay}</div>
+    </div>`).join('');
+}
+
+function initDrag() {
+  const list = document.getElementById('drag-list');
+  if (!list) return;
+  list.addEventListener('dragstart', e => {
+    dragEl = e.target.closest('.drag-item');
+    if (dragEl) dragEl.classList.add('dragging');
+  });
+  list.addEventListener('dragend', () => {
+    if (dragEl) dragEl.classList.remove('dragging');
+    dragEl = null;
+  });
+  list.addEventListener('dragover', e => {
+    e.preventDefault();
+    const over = e.target.closest('.drag-item');
+    if (over && over !== dragEl) {
+      const rect = over.getBoundingClientRect();
+      e.clientY < rect.top + rect.height / 2
+        ? list.insertBefore(dragEl, over)
+        : over.nextSibling ? list.insertBefore(dragEl, over.nextSibling) : list.appendChild(dragEl);
+    }
+  });
+}
+
+async function saveDragOrder() {
+  document.querySelectorAll('.drag-item').forEach((el, i) => {
+    const fac = appFacilities.find(f => f.id === el.dataset.id);
+    if (fac) fac.routeOrder = i + 1;
+  });
+  appData.facilities = appFacilities;
+  await saveData();
+  renderFacilities();
+  showToast('配送順を保存しました');
+}
+
+// Modal outside click
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  renderOrderItems();
+  initDrag();
+  // 管理者ログイン時はページ読み込み時にデータ取得不要（ログイン時に取得）
+</script>
+</body>
+</html>

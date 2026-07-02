@@ -428,6 +428,26 @@
   <div class="content" id="contract-body"></div>
 </div>
 
+<!-- PASSWORD CHANGE -->
+<div id="page-pwchange" class="page">
+  <div class="header">
+    <button class="header-back" onclick="showPage('page-home')">← 戻る</button>
+    <div class="header-title">パスワード変更</div><div style="width:64px"></div>
+  </div>
+  <div class="content">
+    <div class="section-card">
+      <div class="section-card-header">🔑 パスワードの変更</div>
+      <div class="section-card-body">
+        <div class="form-row"><label>現在のパスワード *</label><input type="password" id="pw-current" placeholder="現在のパスワード"></div>
+        <div class="form-row"><label>新しいパスワード *</label><input type="password" id="pw-new" placeholder="新しいパスワード（4文字以上）"></div>
+        <div class="form-row"><label>新しいパスワード（確認）*</label><input type="password" id="pw-confirm" placeholder="もう一度入力"></div>
+        <div class="notice" style="margin-top:12px;">パスワードは施設スタッフ全員で共有してください。変更後すぐに有効になります。</div>
+        <button class="btn btn-primary" onclick="changePassword()">✓ パスワードを変更する</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== CONTACT ===== -->
 <div id="page-contact" class="page">
   <div class="header">
@@ -473,9 +493,12 @@
   </div>
 
   <div class="admin-content" id="admin-fac">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-      <div style="font-size:15px;font-weight:700;color:#334155;">登録施設一覧</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <div style="font-size:15px;font-weight:700;color:#334155;">登録施設一覧 <span id="fac-count" style="font-size:12px;color:var(--gray-400);font-weight:400;"></span></div>
       <button class="btn btn-primary btn-inline btn-sm" onclick="openAddFacility()">＋ 施設追加</button>
+    </div>
+    <div class="search-bar" style="margin-bottom:12px;">
+      <input type="text" id="fac-search" placeholder="🔍 施設名・ID・担当者で検索" oninput="renderFacilities(this.value)">
     </div>
     <div id="facilities-list"></div>
   </div>
@@ -577,7 +600,8 @@
     </div>
     <div class="form-row"><label>メールアドレス</label><input type="email" id="fac-email"></div>
     <div class="form-row-2col">
-      <div class="form-row"><label>配送曜日</label><select id="fac-day"><option>月曜日</option><option selected>火曜日</option><option>水曜日</option><option>木曜日</option><option>金曜日</option><option>土曜日</option></select></div>
+      <div class="form-row"><label>エリア</label><input type="text" id="fac-area" placeholder="小淵沢・長坂"></div>
+    <div class="form-row"><label>配送曜日</label><select id="fac-day"><option>月曜日</option><option selected>火曜日</option><option>水曜日</option><option>木曜日</option><option>金曜日</option><option>土曜日</option></select></div>
       <div class="form-row"><label>配送ルート順</label><input type="number" id="fac-route" min="1"></div>
     </div>
     <div class="form-row"><label>システム利用料（月額¥1,000）</label><select id="fac-sysfee"><option value="true">対象</option><option value="false">非対象</option></select></div>
@@ -645,6 +669,8 @@ const SYSTEM_FEE = 1000;   // 月額システム利用料（税別）
 const TAX_RATE = 0.10;     // 消費税10%
 
 // ===== DEFAULT ITEMS（2025年7月1日〜 新単価） =====
+const DEFAULT_FACILITIES = [{"id":"aoisora","name":"B&B 蒼い空","pw":"1234","address":"北杜市小淵沢町上笹尾3332-275","tel":"0551-36-5975","contact":"府川 宏","email":"bb-aoisora@bf6.so-net.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":1,"systemFee":true,"note":""},{"id":"casaboo","name":"casa boo","pw":"1234","address":"","tel":"080-7321-7092","contact":"菅野","email":"bootsuku1970@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":2,"systemFee":true,"note":""},{"id":"lampslodge","name":"Lamps Lodge（ランプスロッヂ）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1107","tel":"0551-36-3556","contact":"小林 努","email":"info@lampslodge.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":3,"systemFee":true,"note":""},{"id":"malaika","name":"MALAIKA（マライカ）","pw":"1234","address":"北杜市小淵沢町10083-2","tel":"080-5524-7418","contact":"佐藤 里花","email":"pension.malaika@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":4,"systemFee":true,"note":""},{"id":"warmingup","name":"WARMING UP（ウォーミングアップ）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1218","tel":"0551-36-4171","contact":"浦部 良","email":"p.warmingup@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":5,"systemFee":true,"note":""},{"id":"ascot","name":"ガストホフ アスコット","pw":"1234","address":"北杜市小淵沢町10124-1","tel":"0551-36-4521","contact":"中安 二郎","email":"ascot@pension.or.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":6,"systemFee":true,"note":""},{"id":"countrymama","name":"カントリーママ","pw":"1234","address":"北杜市小淵沢町10214-4","tel":"0551-36-4621","contact":"光山 真理","email":"yada@p-mama.net","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":7,"systemFee":true,"note":""},{"id":"den","name":"ステンドハウスDEN（でん）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1555","tel":"090-1463-2183","contact":"田畑 雅宏","email":"goal@den.gr.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":8,"systemFee":true,"note":""},{"id":"makiba","name":"テニスハウス まきば","pw":"1234","address":"北杜市小淵沢町10183-1","tel":"090-2332-3885","contact":"小林 千鶴子","email":"makiba@ruby.plala.or.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":9,"systemFee":true,"note":""},{"id":"heartandheart","name":"ハート＆ハート","pw":"1234","address":"北杜市小淵沢町10088-9","tel":"0551-36-3281","contact":"井上 健","email":"","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":10,"systemFee":true,"note":""},{"id":"flyingspoon","name":"ヒュッテフライングスプーン","pw":"1234","address":"北杜市長坂町大井ヶ森985-6","tel":"0551-32-7727","contact":"","email":"f-spoon@mx3.nns.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":11,"systemFee":true,"note":""},{"id":"blanche","name":"ブランシェ杜","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1106","tel":"0551-45-7293","contact":"松本 美子","email":"eizi1129@icloud.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":12,"systemFee":true,"note":""},{"id":"place8","name":"プレイス 八ヶ岳 ロッジ＆コテージ","pw":"1234","address":"","tel":"","contact":"渡辺","email":"tukke@me.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":13,"systemFee":true,"note":""},{"id":"field","name":"ペンション フィールド","pw":"1234","address":"北杜市小淵沢町6700","tel":"0551-36-5341","contact":"","email":"mail@p-field.net","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":14,"systemFee":true,"note":""},{"id":"buttondown","name":"ペンション ボタンダウン","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1493","tel":"0551-36-4126","contact":"下坂 勇","email":"button@ruby.plala.or.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":15,"systemFee":true,"note":""},{"id":"pollyanna","name":"ペンション ポリアンナ","pw":"1234","address":"北杜市小淵沢町2790-2","tel":"0551-36-3954","contact":"持田 豊","email":"polly@pollyanna.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":16,"systemFee":true,"note":""},{"id":"morningmist","name":"ペンション モーニングミスト","pw":"1234","address":"北杜市長坂町小荒間1325-19","tel":"0551-20-4317","contact":"藤田 宣彦","email":"info@morning-mist.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":17,"systemFee":true,"note":""},{"id":"wa","name":"ペンション わっ！","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1482","tel":"080-5038-7353","contact":"澤 晴美","email":"p-wa@sawa.gr.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":18,"systemFee":true,"note":""},{"id":"shiroikouma","name":"ペンション 白い仔馬","pw":"1234","address":"北杜市小淵沢町10089-4","tel":"0551-36-4150","contact":"久保田 昭次","email":"kouma@eps4.comlink.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":19,"systemFee":true,"note":""},{"id":"albion","name":"ペンションあるびおん","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1157","tel":"0551-36-4166","contact":"市川 進","email":"p-albion@p-albion.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":20,"systemFee":true,"note":""},{"id":"watching","name":"ペンションうぉっちんぐ","pw":"1234","address":"北杜市小淵沢町上笹尾3332-366","tel":"0551-36-3775","contact":"吉林 昴","email":"info@p-watching.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":21,"systemFee":true,"note":""},{"id":"maronkurin","name":"マロン＆クリン","pw":"1234","address":"北杜市長坂町白井沢3137-2","tel":"0551-32-5569","contact":"池畑 美香","email":"kurin-211-dog@docomo.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":22,"systemFee":true,"note":""},{"id":"shimaya","name":"画家の宿 志満屋（しまや）","pw":"1234","address":"北杜市長坂町富岡54-1","tel":"0551-32-3068","contact":"","email":"info@gakanoyadoshimaya.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":23,"systemFee":true,"note":""},{"id":"owl","name":"懐石の宿 アウル","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1610","tel":"0551-36-4541","contact":"石井 仁","email":"owljin0429@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":24,"systemFee":true,"note":""},{"id":"gekkasosha","name":"月下草舎（げっかそうしゃ）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-270","tel":"0551-36-4801","contact":"笹沼 郁夫","email":"lua@gekkasosha.net","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":25,"systemFee":true,"note":""},{"id":"issaku","name":"古守宿一作","pw":"1234","address":"北杜市小淵沢町松向215-1","tel":"0551-36-5858","contact":"新海 篤一","email":"zxwii0fk3ngrcbfpe67w@docomo.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":26,"systemFee":true,"note":""},{"id":"hibikino","name":"自然の宿 響野（ひびきの）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-504","tel":"0551-36-5441","contact":"清水 雅子","email":"hibiki@sun.gmobb.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":27,"systemFee":true,"note":""},{"id":"jinjosho","name":"尋常高等小学荘","pw":"1234","address":"北杜市小淵沢町10210","tel":"0551-36-3010","contact":"進藤 康江","email":"","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":28,"systemFee":true,"note":""},{"id":"mahounofue","name":"西洋民宿 魔法の笛","pw":"1234","address":"北杜市小淵沢町上笹尾3332-160","tel":"0551-36-6554","contact":"","email":"mahounofue@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":29,"systemFee":true,"note":""},{"id":"izumien","name":"泉園","pw":"1234","address":"北杜市小淵沢町1959","tel":"0551-36-4018","contact":"田中 秀知","email":"info@izumien.info","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":30,"systemFee":true,"note":""},{"id":"nagasakakh","name":"長坂観光ホテル","pw":"1234","address":"北杜市長坂町長坂上条2531","tel":"0551-32-2273","contact":"河合 秀明","email":"main@nagasakakh.rdy.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":31,"systemFee":true,"note":""},{"id":"ponyyh","name":"八ヶ岳ポニーユースホステル","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1911","tel":"0551-36-6401","contact":"原沢 匠","email":"yatsugatake@ponyyh.sunnyday.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":32,"systemFee":true,"note":""},{"id":"furo","name":"風路（ふうろ）","pw":"1234","address":"北杜市小淵沢町10122-15","tel":"0551-36-3826","contact":"佐藤 和子","email":"furo@p-furo.net","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":33,"systemFee":true,"note":""},{"id":"seminarhouse","name":"八ヶ岳セミナーハウス","pw":"1234","address":"","tel":"","contact":"細川 英雄","email":"hideo.hosokawa@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":34,"systemFee":true,"note":""},{"id":"esperanto","name":"八ヶ岳エスペラント館","pw":"1234","address":"","tel":"","contact":"堀 泰雄","email":"yasuyoshigehiro@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":35,"systemFee":true,"note":""},{"id":"daisho","name":"DAISHO","pw":"1234","address":"","tel":"","contact":"","email":"yatugatakedaisho@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":36,"systemFee":true,"note":""},{"id":"rapisuri","name":"ヴィラ・ラピスラズリ","pw":"1234","address":"","tel":"","contact":"","email":"rapisuri20210301@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":37,"systemFee":true,"note":""},{"id":"laramie","name":"ララミー牧場","pw":"1234","address":"","tel":"","contact":"","email":"s313h1225t227@softbank.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":38,"systemFee":true,"note":""},{"id":"kiyoharu","name":"清春芸術村","pw":"1234","address":"","tel":"","contact":"","email":"kiyoharu.art.colony@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":39,"systemFee":true,"note":""},{"id":"anjour","name":"お掃除本舗 甲府大里店（アンジュール）","pw":"1234","address":"","tel":"","contact":"シマダ","email":"tubatsnaoya@i.softbank.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":40,"systemFee":true,"note":""},{"id":"tyy8","name":"TYY八ヶ岳BASE","pw":"1234","address":"","tel":"","contact":"","email":"lifesquare.yamauchi@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":41,"systemFee":true,"note":""},{"id":"yutaka","name":"アグリツーリズモユタカ","pw":"1234","address":"","tel":"","contact":"ババ ユタカ","email":"ottantottofarm@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":42,"systemFee":true,"note":""},{"id":"forestanddog","name":"八ヶ岳ヴィラ フォレスト＆ドッグ","pw":"1234","address":"","tel":"","contact":"","email":"forestanddoggy@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":43,"systemFee":true,"note":""},{"id":"bbandb","name":"ペンションB＆B白州","pw":"1234","address":"","tel":"","contact":"小池 伸明","email":"info@hakushu.info","area":"白州","deliveryDay":"火曜日","routeOrder":44,"systemFee":true,"note":""},{"id":"seishinkan","name":"正心之館","pw":"1234","address":"","tel":"","contact":"蓑輪 勝","email":"seisinkan-shizu919@ezweb.ne.jp","area":"白州","deliveryDay":"火曜日","routeOrder":45,"systemFee":true,"note":""},{"id":"casademonte","name":"ペンション カサデモンテ白州","pw":"1234","address":"","tel":"","contact":"國澤 俊","email":"pcasademonte@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":46,"systemFee":true,"note":""},{"id":"village","name":"ヴィレッヂ白州","pw":"1234","address":"","tel":"","contact":"小林 富士男","email":"village.hakushu@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":47,"systemFee":true,"note":""},{"id":"bornfree","name":"ペンションボーンフリー","pw":"1234","address":"","tel":"","contact":"伊沢 雅博","email":"2525hitomisan@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":48,"systemFee":true,"note":""},{"id":"hanashakushu","name":"花白州","pw":"1234","address":"","tel":"","contact":"大竹 誠一","email":"kenari@nifty.com","area":"白州","deliveryDay":"火曜日","routeOrder":49,"systemFee":true,"note":""},{"id":"bigland","name":"オートリゾートパーク・ビッグランド","pw":"1234","address":"","tel":"","contact":"進藤 修次","email":"info@bigland.co.jp","area":"白州","deliveryDay":"火曜日","routeOrder":50,"systemFee":true,"note":""},{"id":"kaikoma","name":"ゲストハウス甲斐駒","pw":"1234","address":"","tel":"","contact":"","email":"kanto.2326@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":51,"systemFee":true,"note":""},{"id":"foster","name":"白州フォスターヴィレッジ","pw":"1234","address":"","tel":"","contact":"","email":"","area":"白州","deliveryDay":"火曜日","routeOrder":52,"systemFee":true,"note":""},{"id":"humanbeing","name":"Human BeING","pw":"1234","address":"","tel":"","contact":"","email":"yogaterior.com@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":53,"systemFee":true,"note":""},{"id":"mydear","name":"glamping My dear","pw":"1234","address":"","tel":"","contact":"","email":"sayaka-umehara@great-scenery.com","area":"白州","deliveryDay":"火曜日","routeOrder":54,"systemFee":true,"note":""}];
+
 const DEFAULT_ITEMS = [
   { id:'item_1',  name:'シーツ', size:'137', sizeSpec:'137cm × 275cm（和布団用）', unitPrice:220, bundleQty:10, bundlePrice:2200, active:true, sortOrder:1 },
   { id:'item_2',  name:'シーツ', size:'S',   sizeSpec:'180cm × 320cm（シングルベッド用）', unitPrice:225, bundleQty:10, bundlePrice:2250, active:true, sortOrder:2 },
@@ -711,7 +737,8 @@ async function loadData() {
     contracts:     d.contracts     || [],
     news:          d.news          || [],
   };
-  if (appData.items.length === 0) { appData.items = DEFAULT_ITEMS; await binSet(appData); }
+  if (appData.facilities.length === 0) { appData.facilities = DEFAULT_FACILITIES; await binSet(appData); }
+    if (appData.items.length === 0) { appData.items = DEFAULT_ITEMS; await binSet(appData); }
 }
 async function saveData() {
   try { await binSet(appData); }
@@ -1064,7 +1091,7 @@ async function deleteNews(id){ if(!confirm('このお知らせを削除します
 function openAddFacility() {
   editingFacilityId=null;
   document.getElementById('modal-facility-title').textContent='施設追加';
-  ['fac-name','fac-id','fac-pw','fac-address','fac-tel','fac-contact','fac-email','fac-note','fac-route'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['fac-name','fac-id','fac-pw','fac-address','fac-tel','fac-contact','fac-email','fac-note','fac-route','fac-area'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('fac-day').value='火曜日';
   document.getElementById('fac-sysfee').value='true';
   document.getElementById('modal-facility').classList.add('open');
@@ -1077,7 +1104,7 @@ function openEditFacility(id) {
   document.getElementById('fac-pw').value=f.pw||''; document.getElementById('fac-address').value=f.address||'';
   document.getElementById('fac-tel').value=f.tel||''; document.getElementById('fac-contact').value=f.contact||'';
   document.getElementById('fac-email').value=f.email||''; document.getElementById('fac-day').value=f.deliveryDay||'火曜日';
-  document.getElementById('fac-route').value=f.routeOrder||''; document.getElementById('fac-note').value=f.note||'';
+  document.getElementById('fac-route').value=f.routeOrder||''; document.getElementById('fac-area').value=f.area||''; document.getElementById('fac-note').value=f.note||'';
   document.getElementById('fac-sysfee').value=String(f.systemFee!==false);
   document.getElementById('modal-facility').classList.add('open');
 }
@@ -1089,9 +1116,19 @@ async function saveFacility() {
   const obj={ id:fid,name,pw,
     address:document.getElementById('fac-address').value.trim(), tel:document.getElementById('fac-tel').value.trim(),
     contact:document.getElementById('fac-contact').value.trim(), email:document.getElementById('fac-email').value.trim(),
+    area:document.getElementById('fac-area').value.trim(),
     deliveryDay:document.getElementById('fac-day').value, routeOrder:parseInt(document.getElementById('fac-route').value)||99,
     systemFee:document.getElementById('fac-sysfee').value==='true', note:document.getElementById('fac-note').value.trim() };
-  if(editingFacilityId){ const i=appData.facilities.findIndex(x=>x.id===editingFacilityId); if(i>=0)appData.facilities[i]=obj; }
+  if(editingFacilityId){
+    // IDが変更された場合、関連データも更新
+    if(editingFacilityId !== fid) {
+      appData.orders.forEach(o=>{ if(o.facilityId===editingFacilityId){ o.facilityId=fid; } });
+      appData.deliveryNotes.forEach(n=>{ if(n.facilityId===editingFacilityId){ n.facilityId=fid; } });
+      appData.invoices.forEach(v=>{ if(v.facilityId===editingFacilityId){ v.facilityId=fid; } });
+      appData.contracts.forEach(c=>{ if(c.facilityId===editingFacilityId){ c.facilityId=fid; } });
+    }
+    const i=appData.facilities.findIndex(x=>x.id===editingFacilityId); if(i>=0)appData.facilities[i]=obj;
+  }
   else { if(appData.facilities.find(x=>x.id===fid)){ showToast('このIDは使用中です','error'); return; } appData.facilities.push(obj); }
   showToast('保存中...','info'); await saveData();
   renderFacilities(); closeModal('modal-facility'); showToast('保存しました');
@@ -1102,25 +1139,35 @@ async function deleteFacility(id) {
   appData.facilities=appData.facilities.filter(x=>x.id!==id);
   await saveData(); renderFacilities(); showToast('削除しました');
 }
-function renderFacilities() {
+function renderFacilities(query='') {
   const c=document.getElementById('facilities-list'); if(!c)return;
-  if(!appData.facilities.length){ c.innerHTML='<div class="empty-state"><span class="empty-state-icon">🏢</span><div class="empty-state-text">施設が登録されていません<br>「＋ 施設追加」から登録してください</div></div>'; return; }
-  c.innerHTML=[...appData.facilities].sort((a,b)=>(a.routeOrder||99)-(b.routeOrder||99)).map(f=>{
-    const consent=appData.contracts.find(x=>x.facilityId===f.id&&x.agreed);
-    return `<div class="facility-card">
-      <div class="facility-top">
-        <div><div class="facility-name">${f.name}</div>
-        <div class="facility-meta">ID: ${f.id}　PW: ${f.pw}<br>${f.deliveryDay}配送　ルート${f.routeOrder}番　${f.tel||''}</div></div>
-        <div style="text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
-          <span class="${consent?'badge-paid':'badge-unpaid'}">${consent?'契約同意済':'未同意'}</span>
-          <span class="${f.systemFee!==false?'badge-active':'badge-inactive'}">利用料${f.systemFee!==false?'対象':'非対象'}</span>
+  let list=[...appData.facilities].sort((a,b)=>(a.routeOrder||99)-(b.routeOrder||99));
+  if(query) list=list.filter(f=>f.name.includes(query)||f.id.includes(query)||(f.contact||'').includes(query));
+  const countEl=document.getElementById('fac-count'); if(countEl)countEl.textContent=`（${list.length}/${appData.facilities.length}施設）`;
+  if(!list.length){ c.innerHTML='<div class="empty-state"><span class="empty-state-icon">🏢</span><div class="empty-state-text">施設が登録されていません<br>「＋ 施設追加」から登録してください</div></div>'; return; }
+  // エリアごとにグループ化
+  const areas=[...new Set(list.map(f=>f.area||'その他'))];
+  c.innerHTML=areas.map(area=>{
+    const areaFacs=list.filter(f=>(f.area||'その他')===area);
+    const areaHeader='<div style="font-size:12px;font-weight:700;color:var(--gray-400);letter-spacing:1px;margin:14px 0 8px;padding-left:4px;">'+area+'（'+areaFacs.length+'施設）</div>';
+    const cards=areaFacs.map(f=>{
+      const consent=appData.contracts.find(x=>x.facilityId===f.id&&x.agreed);
+      return `<div class="facility-card">
+        <div class="facility-top">
+          <div><div class="facility-name">${f.name}</div>
+          <div class="facility-meta">ID: <strong>${f.id}</strong>　PW: ${f.pw}　<span style="font-size:11px;color:var(--gray-400)">${f.area||''}</span><br>${f.deliveryDay}配送　ルート${f.routeOrder}番${f.tel?' | '+f.tel:''}</div></div>
+          <div style="text-align:right;display:flex;flex-direction:column;gap:4px;align-items:flex-end;">
+            <span class="${consent?'badge-paid':'badge-unpaid'}">${consent?'契約同意済':'未同意'}</span>
+            <span class="${f.systemFee!==false?'badge-active':'badge-inactive'}">利用料${f.systemFee!==false?'対象':'非対象'}</span>
+          </div>
         </div>
-      </div>
-      <div class="facility-actions">
-        <button class="facility-edit-btn" onclick="openEditFacility('${f.id}')">編集</button>
-        <button class="facility-del-btn" onclick="deleteFacility('${f.id}')">削除</button>
-      </div>
-    </div>`;
+        <div class="facility-actions">
+          <button class="facility-edit-btn" onclick="openEditFacility('${f.id}')">編集</button>
+          <button class="facility-del-btn" onclick="deleteFacility('${f.id}')">削除</button>
+        </div>
+      </div>`;
+    }).join('');
+    return areaHeader + cards;
   }).join('');
 }
 
@@ -1489,6 +1536,29 @@ async function saveDragOrder() {
   await saveData(); showToast('配送順を保存しました');
 }
 
+
+// ===== PASSWORD CHANGE =====
+async function changePassword() {
+  if (!currentUser || currentUser.role !== 'facility') return;
+  const cur = document.getElementById('pw-current').value;
+  const nw  = document.getElementById('pw-new').value;
+  const con = document.getElementById('pw-confirm').value;
+  if (!cur || !nw || !con) { showToast('すべて入力してください','error'); return; }
+  const f = appData.facilities.find(x=>x.id===currentUser.id);
+  if (!f) { showToast('施設情報が見つかりません','error'); return; }
+  if (f.pw !== cur) { showToast('現在のパスワードが違います','error'); return; }
+  if (nw.length < 4) { showToast('新しいパスワードは4文字以上にしてください','error'); return; }
+  if (nw !== con) { showToast('新しいパスワードが一致しません','error'); return; }
+  f.pw = nw;
+  currentUser.facility.pw = nw;
+  showToast('保存中...','info');
+  await saveData();
+  document.getElementById('pw-current').value='';
+  document.getElementById('pw-new').value='';
+  document.getElementById('pw-confirm').value='';
+  showToast('パスワードを変更しました');
+  showPage('page-home');
+}
 // ===== PRINT =====
 function openPrint(html) {
   document.getElementById('print-area').innerHTML=html;

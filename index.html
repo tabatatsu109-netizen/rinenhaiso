@@ -780,13 +780,25 @@ async function doLogin() {
 function doLogout(){ currentUser=null; document.getElementById('login-id').value=''; document.getElementById('login-pw').value=''; showPage('page-login'); }
 
 // ===== 次回配送日・締切 =====
+// ルール：小淵沢・長坂→火曜配送、白州→木曜配送、締切：前週水曜15:00
 function nextDeliveryInfo(f) {
-  const targetDay = dayMap[f.deliveryDay] ?? 2;
-  const today = new Date(); today.setHours(0,0,0,0);
+  const targetDay = dayMap[f.deliveryDay] ?? (f.area==='白州' ? 4 : 2);
+  const now = new Date();
+  const today = new Date(now); today.setHours(0,0,0,0);
   let diff = (targetDay - today.getDay() + 7) % 7;
   if (diff===0) diff=7;
   const nextDate = new Date(today.getTime()+diff*86400000);
-  const deadline = new Date(nextDate.getTime()-86400000); deadline.setHours(17,0,0,0);
+  // 締切：配送日の前週水曜15:00
+  const deadline = new Date(nextDate);
+  let backDays = (nextDate.getDay() - 3 + 7) % 7;
+  if (backDays===0) backDays=7;
+  deadline.setDate(nextDate.getDate() - backDays);
+  deadline.setHours(15,0,0,0);
+  // 締切済みなら翌週に繰り越し
+  if (now > deadline) {
+    nextDate.setDate(nextDate.getDate()+7);
+    deadline.setDate(deadline.getDate()+7);
+  }
   return { nextDate, deadline, iso: nextDate.toISOString().slice(0,10) };
 }
 
@@ -799,7 +811,7 @@ function renderFacilityHome() {
   const nd = info.nextDate;
   document.getElementById('home-delivery-date').textContent = `${nd.getFullYear()}年${nd.getMonth()+1}月${nd.getDate()}日（${dayNames[nd.getDay()]}）`;
   const dl = info.deadline;
-  document.getElementById('home-delivery-sub').textContent = `注文締切：${dl.getMonth()+1}月${dl.getDate()}日（${dayNames[dl.getDay()]}）17:00`;
+  document.getElementById('home-delivery-sub').textContent = `注文締切：${dl.getMonth()+1}月${dl.getDate()}日（${dayNames[dl.getDay()]}）15:00`;
 
   // アラート
   const alerts=[];
@@ -822,7 +834,7 @@ function renderFacilityHome() {
 function goToOrder() {
   const f = currentUser.facility;
   const info = nextDeliveryInfo(f);
-  document.getElementById('order-notice').innerHTML = `配送予定日：<strong>${fmtDate(info.iso)}</strong><br>注文締切：${info.deadline.getMonth()+1}月${info.deadline.getDate()}日（${dayNames[info.deadline.getDay()]}）17:00`;
+  document.getElementById('order-notice').innerHTML = `配送予定日：<strong>${fmtDate(info.iso)}</strong><br>注文締切：${info.deadline.getMonth()+1}月${info.deadline.getDate()}日（${dayNames[info.deadline.getDay()]}）15:00`;
   // 締切警告（配送前日17時を過ぎている場合）
   const now = new Date();
   const warnEl = document.getElementById('deadline-warning');

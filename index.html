@@ -1615,10 +1615,26 @@ async function resetContract(facilityId) {
 function printConsent(facilityId) {
   const consent=appData.contracts.find(x=>x.facilityId===facilityId&&x.agreed); if(!consent)return;
   const f=appData.facilities.find(x=>x.id===facilityId)||{};
-  const terms=contractTermsHtml().replace('<div class="contract-terms">','<div style="font-size:8pt;line-height:1.45;">').replace(/<h4>/g,'<span style="font-weight:700;color:#1a5f7a;">').replace(/<\/h4>/g,'</span> ');
+  const articles=[
+    ['第1条（目的）','本契約は、当社が提供するリネン注文システムの利用条件、リネンの注文・納品・請求、システム利用料等について定めるものです。'],
+    ['第2条（対象施設）','本システムを利用する施設は、登録された施設名・担当者情報に基づき利用するものとします。'],
+    ['第3条（リネンの注文）','施設は、本システムを通じて必要なリネンを注文します。注文内容は、施設が送信した時点で確定するものとします。'],
+    ['第4条（納品）','当社は、注文内容に基づき指定場所へリネンを納品します。納品後の盗難・汚損・紛失について、当社は責任を負いません。'],
+    ['第5条（リネンの取扱い）','リネンが使用不能な汚損・破損状態となった場合、施設は1枚につき1,000円を負担します。本来の目的以外での使用、第三者への貸与・譲渡は禁止します。針・ペン等の混入物がないことを返却前に確認してください。'],
+    ['第6条（価格）','リネン単価は、当社が別途定める価格表によります。価格は改定される場合があります。'],
+    ['第7条（システム利用料）','施設は、本システムの利用・保守費用として、月額1,000円（税別）を支払うものとします。ただし、当月に一度も発注がない場合、当月分のシステム利用料は発生しません。当月に一度でも発注があった場合、当月分のシステム利用料が発生します。'],
+    ['第8条（請求・支払い）','当社は、リネン利用料金およびシステム利用料を月ごとに集計し、施設へ請求します。施設は、当社指定の方法により支払うものとします。'],
+    ['第9条（電子署名・同意）','施設担当者は、本契約内容を確認し、氏名入力、同意チェック、手書き電子署名、送信操作により本契約に同意したものとします。当社は、署名日時、署名画像、施設名、担当者名、IPアドレス、利用端末情報、契約バージョンを保存します。'],
+    ['第10条（契約内容の変更）','当社は、必要に応じて本契約内容を変更できるものとします。重要な変更がある場合は、事前に施設へ通知します。'],
+    ['第11条（契約期間）','本契約は、電子署名が完了した日から有効とし、施設が本システムの利用を終了するまで継続します。'],
+    ['第12条（協議）','本契約に定めのない事項または疑義が生じた場合、当社と施設は誠実に協議して解決するものとします。'],
+  ];
+  const termsHtml = articles.map(([t,b])=>
+    `<div style="margin-bottom:2mm;"><span style="font-weight:700;color:#1a5f7a;">${t}</span>　${b}</div>`
+  ).join('');
   openPrint(`<div class="print-doc-title">リネン注文システム利用契約書</div>
-    <div class="print-meta" style="margin-bottom:2mm;">施設名：<strong>${consent.facilityName}</strong>　御中　／　住所：${f.address||'—'}</div>
-    ${terms}
+    <div class="print-meta" style="margin-bottom:3mm;">施設名：<strong>${consent.facilityName}</strong>　御中　／　住所：${f.address||'—'}</div>
+    <div style="font-size:8.5pt;line-height:1.5;">${termsHtml}</div>
     <table class="print-table" style="margin-top:3mm;">
       <tr>
         <th style="width:26mm;">同意日時</th><td style="width:52mm;">${new Date(consent.agreedAt).toLocaleString('ja-JP')}</td>

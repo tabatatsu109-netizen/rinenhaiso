@@ -104,6 +104,10 @@
   .copy-prev-title { font-size: 14px; font-weight: 600; color: var(--primary); margin-bottom: 8px; }
   .copy-prev-items { font-size: 13px; color: var(--gray-600); margin-bottom: 12px; line-height: 1.7; }
 
+  .delivery-hero { background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%); color: white; border-radius: 16px; padding: 20px; text-align: center; margin-bottom: 14px; box-shadow: var(--shadow-md); }
+  .delivery-hero-label { font-size: 13px; opacity: 0.85; margin-bottom: 6px; }
+  .delivery-hero-date { font-size: 26px; font-weight: 800; line-height: 1.3; }
+  .delivery-hero-deadline { font-size: 13px; opacity: 0.9; margin-top: 8px; background: rgba(255,255,255,0.15); border-radius: 8px; padding: 6px 12px; display: inline-block; }
   .order-total-bar { background: var(--primary); color: white; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-radius: 12px; }
   .order-total-label { font-size: 14px; opacity: 0.85; }
   .order-total-amount { font-size: 23px; font-weight: 800; }
@@ -146,6 +150,9 @@
   .contract-terms { background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 10px; padding: 16px; font-size: 13px; line-height: 1.9; color: var(--gray-700); max-height: 320px; overflow-y: auto; }
   .contract-terms h4 { font-size: 14px; color: var(--primary); margin: 10px 0 4px; }
   .contract-terms h4:first-child { margin-top: 0; }
+  .sign-pad-wrap { position: relative; border: 2px dashed var(--primary-light); border-radius: 12px; background: #fafcfd; height: 180px; overflow: hidden; }
+  .sign-pad { width: 100%; height: 100%; display: block; touch-action: none; cursor: crosshair; }
+  .sign-pad-placeholder { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--gray-300); font-size: 22px; font-weight: 700; pointer-events: none; }
   .consent-done-card { background: #e8f7ee; border: 2px solid #a3d9b8; border-radius: 12px; padding: 18px; text-align: center; }
   .consent-done-icon { font-size: 40px; }
   .consent-done-title { font-size: 17px; font-weight: 700; color: #155724; margin: 8px 0 4px; }
@@ -319,7 +326,11 @@
     <div class="header-title">リネン注文</div><div style="width:64px"></div>
   </div>
   <div class="content">
-    <div id="order-notice" class="notice"></div>
+    <div class="delivery-hero" id="delivery-hero">
+      <div class="delivery-hero-label">この注文の配送予定日</div>
+      <div class="delivery-hero-date" id="delivery-hero-date">—</div>
+      <div class="delivery-hero-deadline" id="delivery-hero-deadline"></div>
+    </div>
     <div id="deadline-warning"></div>
     <div class="copy-prev-card" id="copy-prev-card" style="display:none">
       <div class="copy-prev-title" id="copy-prev-title">📋 前回の注文</div>
@@ -477,6 +488,7 @@
     <div class="admin-tab" data-tab="items" onclick="switchAdminTab('items')">品目管理</div>
     <div class="admin-tab" data-tab="orders" onclick="switchAdminTab('orders')">注文管理</div>
     <div class="admin-tab" data-tab="delivery" onclick="switchAdminTab('delivery')">配送一覧</div>
+    <div class="admin-tab" data-tab="schedule" onclick="switchAdminTab('schedule')">配送日設定</div>
     <div class="admin-tab" data-tab="route" onclick="switchAdminTab('route')">配送順</div>
     <div class="admin-tab" data-tab="summary" onclick="switchAdminTab('summary')">準備集計</div>
     <div class="admin-tab" data-tab="notes" onclick="switchAdminTab('notes')">納品書</div>
@@ -537,6 +549,12 @@
       <div id="delivery-list-body"></div>
     </div>
     <button class="btn btn-secondary" onclick="printDeliveryList()">🖨️ 配送一覧を印刷</button>
+  </div>
+
+  <div class="admin-content" id="admin-schedule">
+    <div class="notice">エリアごとに次回配送日・注文締切を手動で設定できます。繁忙期で曜日が変わる週や週2回配送のときに使ってください。<br>空欄にすると自動計算（小淵沢・長坂＝火曜／白州＝木曜、締切は前週水曜15:00）に戻ります。</div>
+    <div id="schedule-list"></div>
+    <div class="mt-16"><button class="btn btn-primary" onclick="saveSchedule()">✓ 配送日設定を保存する</button></div>
   </div>
 
   <div class="admin-content" id="admin-route">
@@ -698,7 +716,7 @@ const CONTRACT_TERMS = {
 
 // ===== STATE =====
 let currentUser = null;
-let appData = { facilities:[], items:[], orders:[], deliveryNotes:[], invoices:[], contracts:[], news:[] };
+let appData = { facilities:[], items:[], orders:[], deliveryNotes:[], invoices:[], contracts:[], news:[], schedule:{} };
 let orderBundles = {};
 let editingFacilityId = null, editingItemId = null;
 let currentOrderFilter = 'all';
@@ -709,6 +727,8 @@ let dragEl = null;
 // helpers
 const yen = n => '¥' + (n||0).toLocaleString();
 const dayNames = ['日','月','火','水','木','金','土'];
+// ローカルタイム基準でYYYY-MM-DDを返す（toISOStringのUTCズレ対策）
+function toLocalISO(d){ const y=d.getFullYear(),m=String(d.getMonth()+1).padStart(2,'0'),dd=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${dd}`; }
 const dayMap = {月曜日:1,火曜日:2,水曜日:3,木曜日:4,金曜日:5,土曜日:6,日曜日:0};
 function fmtDate(iso){ const [y,m,d]=iso.split('-'); return `${y}年${parseInt(m)}月${parseInt(d)}日（${dayNames[new Date(iso).getDay()]}）`; }
 function itemLabel(i){ return i.name + (i.size && i.size!=='—' ? ' ' + i.size : ''); }
@@ -736,6 +756,7 @@ async function loadData() {
     invoices:      d.invoices      || [],
     contracts:     d.contracts     || [],
     news:          d.news          || [],
+    schedule:      d.schedule      || {},
   };
   if (appData.facilities.length === 0) { appData.facilities = DEFAULT_FACILITIES; await binSet(appData); }
     if (appData.items.length === 0) { appData.items = DEFAULT_ITEMS; await binSet(appData); }
@@ -781,25 +802,40 @@ function doLogout(){ currentUser=null; document.getElementById('login-id').value
 
 // ===== 次回配送日・締切 =====
 // ルール：小淵沢・長坂→火曜配送、白州→木曜配送、締切：前週水曜15:00
+// 管理者がエリア設定(appData.schedule)で手動指定した場合はそれを最優先
 function nextDeliveryInfo(f) {
-  const targetDay = dayMap[f.deliveryDay] ?? (f.area==='白州' ? 4 : 2);
+  const area = f.area || 'その他';
+  const sched = (appData.schedule && appData.schedule[area]) || {};
+  // 管理者が手動で次回配送日を設定している場合
+  if (sched.nextDeliveryDate) {
+    const nextDate = new Date(sched.nextDeliveryDate + 'T00:00:00');
+    let deadline;
+    if (sched.orderDeadline) {
+      deadline = new Date(sched.orderDeadline + 'T15:00:00');
+    } else {
+      deadline = new Date(nextDate);
+      let bk = (nextDate.getDay() - 3 + 7) % 7; if(bk===0) bk=7;
+      deadline.setDate(nextDate.getDate() - bk); deadline.setHours(15,0,0,0);
+    }
+    return { nextDate, deadline, iso: toLocalISO(nextDate), manual:true };
+  }
+  // 自動計算
+  const targetDay = dayMap[f.deliveryDay] ?? (area==='白州' ? 4 : 2);
   const now = new Date();
   const today = new Date(now); today.setHours(0,0,0,0);
   let diff = (targetDay - today.getDay() + 7) % 7;
   if (diff===0) diff=7;
   const nextDate = new Date(today.getTime()+diff*86400000);
-  // 締切：配送日の前週水曜15:00
   const deadline = new Date(nextDate);
   let backDays = (nextDate.getDay() - 3 + 7) % 7;
   if (backDays===0) backDays=7;
   deadline.setDate(nextDate.getDate() - backDays);
   deadline.setHours(15,0,0,0);
-  // 締切済みなら翌週に繰り越し
   if (now > deadline) {
     nextDate.setDate(nextDate.getDate()+7);
     deadline.setDate(deadline.getDate()+7);
   }
-  return { nextDate, deadline, iso: nextDate.toISOString().slice(0,10) };
+  return { nextDate, deadline, iso: toLocalISO(nextDate) };
 }
 
 // ===== FACILITY HOME =====
@@ -811,7 +847,21 @@ function renderFacilityHome() {
   const nd = info.nextDate;
   document.getElementById('home-delivery-date').textContent = `${nd.getFullYear()}年${nd.getMonth()+1}月${nd.getDate()}日（${dayNames[nd.getDay()]}）`;
   const dl = info.deadline;
-  document.getElementById('home-delivery-sub').textContent = `注文締切：${dl.getMonth()+1}月${dl.getDate()}日（${dayNames[dl.getDay()]}）15:00`;
+  let subText = `注文締切：${dl.getMonth()+1}月${dl.getDate()}日（${dayNames[dl.getDay()]}）15:00`;
+  // 配送日②（繁忙期2回目）があれば追記
+  const area = f.area || 'その他';
+  const sched = (appData.schedule && appData.schedule[area]) || {};
+  if (sched.nextDeliveryDate2) {
+    const nd2 = new Date(sched.nextDeliveryDate2 + 'T00:00:00');
+    subText += `\n📅 2回目の配送：${nd2.getMonth()+1}月${nd2.getDate()}日（${dayNames[nd2.getDay()]}）`;
+    if (sched.orderDeadline2) {
+      const dl2 = new Date(sched.orderDeadline2 + 'T00:00:00');
+      subText += ` / 締切 ${dl2.getMonth()+1}月${dl2.getDate()}日15:00`;
+    }
+  }
+  const subEl = document.getElementById('home-delivery-sub');
+  subEl.style.whiteSpace = 'pre-line';
+  subEl.textContent = subText;
 
   // アラート
   const alerts=[];
@@ -834,8 +884,11 @@ function renderFacilityHome() {
 function goToOrder() {
   const f = currentUser.facility;
   const info = nextDeliveryInfo(f);
-  document.getElementById('order-notice').innerHTML = `配送予定日：<strong>${fmtDate(info.iso)}</strong><br>注文締切：${info.deadline.getMonth()+1}月${info.deadline.getDate()}日（${dayNames[info.deadline.getDay()]}）15:00`;
-  // 締切警告（配送前日17時を過ぎている場合）
+  const nd = info.nextDate;
+  document.getElementById('delivery-hero-date').textContent = `${nd.getFullYear()}年${nd.getMonth()+1}月${nd.getDate()}日（${dayNames[nd.getDay()]}）`;
+  const dl = info.deadline;
+  document.getElementById('delivery-hero-deadline').textContent = `注文締切：${dl.getMonth()+1}月${dl.getDate()}日（${dayNames[dl.getDay()]}）15:00`;
+  window._currentOrderDeliveryDate = info.iso;
   const now = new Date();
   const warnEl = document.getElementById('deadline-warning');
   warnEl.innerHTML = (now > info.deadline)
@@ -903,7 +956,7 @@ async function submitOrder() {
   const typeEl = document.querySelector('input[name="delivery-type"]:checked');
   const now = new Date();
   const info = nextDeliveryInfo(currentUser.facility);
-  const dateStr = now.toISOString().slice(0,10).replace(/-/g,'');
+  const dateStr = toLocalISO(now).replace(/-/g,'');
   const seq = appData.orders.filter(o=>o.id.startsWith(dateStr)).length + 1;
   const orderId = `${dateStr}-${String(seq).padStart(3,'0')}`;
   const items = appData.items.filter(i=>(orderBundles[i.id]||0)>0).map(item=>({
@@ -971,7 +1024,7 @@ function switchDocsTab(tab){ currentDocsTab=tab;
 function renderFacilityDocs() {
   if(!currentUser)return;
   const mEl=document.getElementById('docs-month');
-  if(!mEl.value) mEl.value=new Date().toISOString().slice(0,7);
+  if(!mEl.value) mEl.value=toLocalISO(new Date()).slice(0,7);
   const month=mEl.value;
   const c=document.getElementById('docs-list');
   if (currentDocsTab==='notes') {
@@ -991,23 +1044,22 @@ function renderFacilityDocs() {
 }
 
 // ===== CONTRACT PAGE =====
+const CONTRACT_VERSION = '2026-07-v1';
 function contractTermsHtml() {
   return `<div class="contract-terms">
-    <h4>■ お支払い</h4>${CONTRACT_TERMS.payment}
-    <h4>■ 契約期間</h4>${CONTRACT_TERMS.period}
-    <h4>■ 滞納時の対応</h4>${CONTRACT_TERMS.delinquency}
-    <h4>■ 配送・回収</h4>${CONTRACT_TERMS.delivery}<br>
-    ・シーツ（S/W）、タオル類は指定の袋に入れて回収します<br>
-    ・枕カバー、浴衣、包布はそれぞれ別でまとめて回収します<br>
-    ・血痕・膿・嘔吐・糞尿等が付着した場合は下洗いをしてお引き渡しください<br>
-    ・注文は本システムからの申込のみとし、申込がない場合は配送・回収を行いません（回収のみの場合も送信が必要です）
-    <h4>■ リネンの取扱い</h4>
-    ・${CONTRACT_TERMS.buyout}<br>
-    ・本来の目的以外での使用、第三者への貸与・譲渡はできません<br>
-    ・針・ペン等の混入物がないことを必ずご確認ください<br>
-    ・留守時は指定場所に納品しますが、納品後の盗難・汚損の責任は負いかねます
-    <h4>■ 価格</h4>価格改定を行う場合があります（現行単価は2025年7月1日改定）
-    <h4>■ システム利用料</h4>${CONTRACT_TERMS.systemFee}<br>本注文システムの利用・保守運用費として毎月の請求書に合算されます。
+    <div style="text-align:center;font-weight:700;font-size:15px;color:var(--primary);margin-bottom:12px;">リネン注文システム利用契約書</div>
+    <h4>第1条（目的）</h4>本契約は、当社が提供するリネン注文システムの利用条件、リネンの注文・納品・請求、システム利用料等について定めるものです。
+    <h4>第2条（対象施設）</h4>本システムを利用する施設は、登録された施設名・担当者情報に基づき利用するものとします。
+    <h4>第3条（リネンの注文）</h4>施設は、本システムを通じて必要なリネンを注文します。注文内容は、施設が送信した時点で確定するものとします。
+    <h4>第4条（納品）</h4>当社は、注文内容に基づき指定場所へリネンを納品します。納品後の盗難・汚損・紛失について、当社は責任を負いません。
+    <h4>第5条（リネンの取扱い）</h4>リネンが使用不能な汚損・破損状態となった場合、施設は1枚につき1,000円を負担します。本来の目的以外での使用、第三者への貸与・譲渡は禁止します。針・ペン等の混入物がないことを返却前に確認してください。
+    <h4>第6条（価格）</h4>リネン単価は、当社が別途定める価格表によります。価格は改定される場合があります。
+    <h4>第7条（システム利用料）</h4>施設は、本システムの利用・保守費用として、月額1,000円（税別）を支払うものとします。ただし、当月に一度も発注がない場合、当月分のシステム利用料は発生しません。当月に一度でも発注があった場合、当月分のシステム利用料が発生します。
+    <h4>第8条（請求・支払い）</h4>当社は、リネン利用料金およびシステム利用料を月ごとに集計し、施設へ請求します。施設は、当社指定の方法により支払うものとします。
+    <h4>第9条（電子署名・同意）</h4>施設担当者は、本契約内容を確認し、氏名入力、同意チェック、手書き電子署名、送信操作により本契約に同意したものとします。当社は、署名日時、署名画像、施設名、担当者名、IPアドレス、利用端末情報、契約バージョンを保存します。
+    <h4>第10条（契約内容の変更）</h4>当社は、必要に応じて本契約内容を変更できるものとします。重要な変更がある場合は、事前に施設へ通知します。
+    <h4>第11条（契約期間）</h4>本契約は、電子署名が完了した日から有効とし、施設が本システムの利用を終了するまで継続します。
+    <h4>第12条（協議）</h4>本契約に定めのない事項または疑義が生じた場合、当社と施設は誠実に協議して解決するものとします。
   </div>`;
 }
 function renderContractPage() {
@@ -1021,32 +1073,69 @@ function renderContractPage() {
         <div class="consent-done-title">同意済みです</div>
         <div class="consent-done-meta">同意日時：${new Date(consent.agreedAt).toLocaleString('ja-JP')}<br>署名者：${consent.signerName}</div>
       </div>
+      ${consent.signImage?`<div style="text-align:center;margin-top:14px;"><div style="font-size:12px;color:var(--gray-600);margin-bottom:6px;">署名</div><img src="${consent.signImage}" style="max-width:100%;border:1px solid var(--gray-200);border-radius:8px;background:white;"></div>`:''}
       <div class="mt-16"><button class="btn btn-secondary" onclick="printConsent('${f.id}')">📄 同意書を表示・印刷（PDF保存可）</button></div>
-      <div class="section-card mt-16"><div class="section-card-header">📜 契約内容（覚書）</div><div class="section-card-body">${contractTermsHtml()}</div></div>`;
+      <div class="section-card mt-16"><div class="section-card-header">📜 契約内容</div><div class="section-card-body">${contractTermsHtml()}</div></div>`;
   } else {
     body.innerHTML=`
-      <div class="notice">下記の契約内容（覚書）およびシステム利用料をご確認のうえ、ご同意をお願いします。</div>
-      <div class="section-card"><div class="section-card-header">📜 契約内容（覚書）</div><div class="section-card-body">${contractTermsHtml()}</div></div>
-      <div class="section-card"><div class="section-card-header">🖋️ 電子同意</div><div class="section-card-body">
-        <div class="form-row"><label>署名（ご担当者様のお名前をフルネームで入力）*</label><input type="text" id="consent-signer" placeholder="例：山田 太郎"></div>
-        <label style="display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.6;margin:10px 0 16px;cursor:pointer;">
+      <div class="notice">下記の契約内容をご確認のうえ、ご署名・ご同意をお願いします。</div>
+      <div class="section-card"><div class="section-card-header">📜 契約内容</div><div class="section-card-body">${contractTermsHtml()}</div></div>
+      <div class="section-card"><div class="section-card-header">🖋️ 電子署名・同意</div><div class="section-card-body">
+        <div class="form-row"><label>① ご担当者様のお名前（フルネーム）*</label><input type="text" id="consent-signer" placeholder="例：山田 太郎"></div>
+        <div class="form-row">
+          <label>② 手書き署名 *（下の枠内に指またはマウスで署名してください）</label>
+          <div class="sign-pad-wrap">
+            <canvas id="sign-pad" class="sign-pad"></canvas>
+            <div class="sign-pad-placeholder" id="sign-placeholder">ここに署名</div>
+          </div>
+          <button class="btn btn-gray btn-sm" style="margin-top:8px;" onclick="clearSignPad()">署名を消してやり直す</button>
+        </div>
+        <label style="display:flex;align-items:flex-start;gap:10px;font-size:14px;line-height:1.6;margin:14px 0 16px;cursor:pointer;">
           <input type="checkbox" id="consent-check" style="width:22px;height:22px;margin-top:2px;flex-shrink:0;">
-          <span>上記の契約内容（覚書）およびシステム利用料 <strong>月額1,000円（税別）</strong> に同意します</span>
+          <span>③ 上記の契約内容（全12条）およびシステム利用料 <strong>月額1,000円（税別）</strong> に同意します</span>
         </label>
-        <button class="btn btn-success" onclick="submitConsent()">✓ 同意して署名する</button>
+        <button class="btn btn-success" onclick="submitConsent()">✓ 署名して同意する</button>
       </div></div>`;
+    setTimeout(initSignPad, 50);
   }
+}
+
+// ===== 手書き署名パッド =====
+let signCtx=null, signing=false, signHasDrawn=false;
+function initSignPad() {
+  const canvas=document.getElementById('sign-pad'); if(!canvas) return;
+  const rect=canvas.getBoundingClientRect();
+  canvas.width=rect.width*2; canvas.height=rect.height*2; // Retina対応
+  signCtx=canvas.getContext('2d');
+  signCtx.scale(2,2);
+  signCtx.lineWidth=2.5; signCtx.lineCap='round'; signCtx.lineJoin='round'; signCtx.strokeStyle='#1e293b';
+  signHasDrawn=false;
+  const pos=e=>{ const r=canvas.getBoundingClientRect(); const t=e.touches?e.touches[0]:e; return {x:t.clientX-r.left, y:t.clientY-r.top}; };
+  const start=e=>{ e.preventDefault(); signing=true; const p=pos(e); signCtx.beginPath(); signCtx.moveTo(p.x,p.y); const ph=document.getElementById('sign-placeholder'); if(ph)ph.style.display='none'; };
+  const move=e=>{ if(!signing)return; e.preventDefault(); const p=pos(e); signCtx.lineTo(p.x,p.y); signCtx.stroke(); signHasDrawn=true; };
+  const end=()=>{ signing=false; };
+  canvas.addEventListener('mousedown',start); canvas.addEventListener('mousemove',move); canvas.addEventListener('mouseup',end); canvas.addEventListener('mouseleave',end);
+  canvas.addEventListener('touchstart',start,{passive:false}); canvas.addEventListener('touchmove',move,{passive:false}); canvas.addEventListener('touchend',end);
+}
+function clearSignPad() {
+  const canvas=document.getElementById('sign-pad'); if(!canvas||!signCtx)return;
+  signCtx.clearRect(0,0,canvas.width,canvas.height); signHasDrawn=false;
+  const ph=document.getElementById('sign-placeholder'); if(ph)ph.style.display='block';
 }
 async function submitConsent() {
   const signer=document.getElementById('consent-signer').value.trim();
-  if(!signer){ showToast('署名（お名前）を入力してください','error'); return; }
+  if(!signer){ showToast('お名前を入力してください','error'); return; }
+  if(!signHasDrawn){ showToast('手書き署名をお願いします','error'); return; }
   if(!document.getElementById('consent-check').checked){ showToast('同意チェックを入れてください','error'); return; }
+  const canvas=document.getElementById('sign-pad');
+  const signImage=canvas.toDataURL('image/png');
   appData.contracts=appData.contracts.filter(c=>c.facilityId!==currentUser.id);
   appData.contracts.push({ facilityId:currentUser.id, facilityName:currentUser.name, agreed:true,
-    agreedAt:new Date().toISOString(), signerName:signer, agent:navigator.userAgent.slice(0,120) });
+    agreedAt:new Date().toISOString(), signerName:signer, signImage,
+    contractVersion:CONTRACT_VERSION, agent:navigator.userAgent.slice(0,150) });
   showToast('保存中...','info');
   await saveData();
-  showToast('同意を記録しました。ありがとうございます');
+  showToast('署名・同意を記録しました。ありがとうございます');
   renderContractPage(); renderFacilityHome();
 }
 
@@ -1061,6 +1150,7 @@ function switchAdminTab(tab) {
   if(tab==='items') renderItems();
   if(tab==='orders') renderOrders();
   if(tab==='route') renderDragList();
+  if(tab==='schedule') renderSchedule();
   if(tab==='notes') renderNotesAdmin();
   if(tab==='invoices') renderInvoicesAdmin();
   if(tab==='contracts') renderContractsAdmin();
@@ -1068,7 +1158,7 @@ function switchAdminTab(tab) {
 
 // ===== DASHBOARD =====
 function renderDashboard() {
-  const today = new Date().toISOString().slice(0,10);
+  const today = toLocalISO(new Date());
   const month = today.slice(0,7);
   const todayOrders = appData.orders.filter(o=>o.createdAt.slice(0,10)===today).length;
   const pending = appData.orders.filter(o=>o.status==='new').length;
@@ -1370,7 +1460,7 @@ function printSummaryView() {
 // ===== DELIVERY NOTES (admin) =====
 function renderNotesAdmin() {
   const dEl=document.getElementById('notes-date');
-  if(!dEl.value) dEl.value=new Date().toISOString().slice(0,10);
+  if(!dEl.value) dEl.value=toLocalISO(new Date());
   const date=dEl.value;
   const issued=new Set(appData.deliveryNotes.map(n=>n.orderId));
   const candidates=appData.orders.filter(o=>o.deliveryDate===date&&!issued.has(o.id)&&(o.items||[]).length>0);
@@ -1431,8 +1521,9 @@ async function generateInvoices() {
     if(appData.invoices.find(v=>v.facilityId===f.id&&v.month===month)) return; // 既存はスキップ
     const orders=appData.orders.filter(o=>o.facilityId===f.id&&o.deliveryDate.startsWith(month));
     const linenTotal=orders.reduce((s,o)=>s+(o.totalAmount||0),0);
-    const sysFee=(f.systemFee!==false)?SYSTEM_FEE:0;
-    if(linenTotal===0&&sysFee===0) return;
+    // 第7条：当月に一度も発注がない場合はシステム利用料なし
+    const sysFee=(f.systemFee!==false && orders.length>0)?SYSTEM_FEE:0;
+    if(orders.length===0) return; // 発注ゼロの月は請求書を作成しない
     const subtotal=linenTotal+sysFee;
     const tax=Math.floor(subtotal*TAX_RATE);
     const seq=appData.invoices.filter(v=>v.month===month).length+1;
@@ -1459,7 +1550,7 @@ async function deleteInvoice(id) {
 }
 function renderInvoicesAdmin() {
   const mEl=document.getElementById('invoice-month');
-  if(!mEl.value) mEl.value=new Date().toISOString().slice(0,7);
+  if(!mEl.value) mEl.value=toLocalISO(new Date()).slice(0,7);
   const list=[...appData.invoices].sort((a,b)=>b.id.localeCompare(a.id));
   document.getElementById('invoices-list').innerHTML = list.length ? list.map(v=>`
     <div class="doc-item"><div class="doc-info">
@@ -1479,7 +1570,7 @@ function printInvoice(invId) {
   openPrint(`<div class="print-doc-title">請　求　書</div>
     <div class="print-flex">
       <div class="print-meta"><strong style="font-size:14pt;">${v.facilityName} 御中</strong><br>${f.address||''}<br><br>${y}年${parseInt(m)}月分のご利用料金を下記の通りご請求申し上げます。</div>
-      <div class="print-meta print-right">請求書番号：${v.id}<br>発行日：${fmtDate(new Date().toISOString().slice(0,10))}<br><br>Linen Order System<br>担当：林 那央斗<br>TEL：080-9548-3411</div>
+      <div class="print-meta print-right">請求書番号：${v.id}<br>発行日：${fmtDate(toLocalISO(new Date()))}<br><br>Linen Order System<br>担当：林 那央斗<br>TEL：080-9548-3411</div>
     </div>
     <table class="print-table">
       <tr><th>項目</th><th style="width:40mm;">金額</th></tr>
@@ -1509,26 +1600,55 @@ function renderContractsAdmin() {
 function printConsent(facilityId) {
   const consent=appData.contracts.find(x=>x.facilityId===facilityId&&x.agreed); if(!consent)return;
   const f=appData.facilities.find(x=>x.id===facilityId)||{};
-  openPrint(`<div class="print-doc-title">リネンサプライ利用同意書</div>
-    <div class="print-meta">
-      施設名：<strong>${consent.facilityName}</strong><br>住所：${f.address||'—'}<br><br>
-      下記の契約内容（覚書）およびシステム利用料に同意いたします。<br><br>
-      <strong>【契約内容】</strong><br>
-      ・${CONTRACT_TERMS.payment}<br>
-      ・${CONTRACT_TERMS.period}<br>
-      ・${CONTRACT_TERMS.delinquency}<br>
-      ・${CONTRACT_TERMS.delivery}<br>
-      ・${CONTRACT_TERMS.buyout}<br>
-      ・リネン類の目的外使用、第三者への貸与・譲渡の禁止<br>
-      ・価格改定を行う場合があります（現行単価は2025年7月1日改定）<br>
-      ・<strong>${CONTRACT_TERMS.systemFee}</strong><br><br>
-      <table class="print-table">
-        <tr><th style="width:40mm;">同意日時</th><td>${new Date(consent.agreedAt).toLocaleString('ja-JP')}</td></tr>
-        <tr><th>署名者</th><td style="font-size:13pt;font-weight:700;">${consent.signerName}</td></tr>
-        <tr><th>記録情報</th><td style="font-size:8.5pt;">${consent.agent||''}</td></tr>
-      </table>
-      <br>本同意書は電子的に記録された同意情報に基づいて発行されています。
-    </div>`);
+  const terms=contractTermsHtml().replace('<div class="contract-terms">','<div style="font-size:9.5pt;line-height:1.8;">').replace(/<h4>/g,'<div style="font-weight:700;margin-top:3mm;color:#1a5f7a;">').replace(/<\/h4>/g,'</div>');
+  openPrint(`<div class="print-doc-title" style="font-size:16pt;">リネン注文システム利用契約書</div>
+    <div class="print-meta">施設名：<strong>${consent.facilityName}</strong>　御中<br>住所：${f.address||'—'}</div>
+    ${terms}
+    <table class="print-table" style="margin-top:5mm;">
+      <tr><th style="width:40mm;">同意日時</th><td>${new Date(consent.agreedAt).toLocaleString('ja-JP')}</td></tr>
+      <tr><th>署名者（氏名）</th><td style="font-size:13pt;font-weight:700;">${consent.signerName}</td></tr>
+      <tr><th>手書き署名</th><td>${consent.signImage?`<img src="${consent.signImage}" style="height:20mm;">`:'（記録なし）'}</td></tr>
+      <tr><th>契約バージョン</th><td>${consent.contractVersion||'—'}</td></tr>
+      <tr><th>記録情報</th><td style="font-size:8pt;">${consent.agent||''}</td></tr>
+    </table>
+    <div style="font-size:8.5pt;margin-top:3mm;">本契約書は電子的に記録された同意情報に基づいて発行されています。</div>`);
+}
+
+// ===== SCHEDULE (配送日設定) =====
+function renderSchedule() {
+  const areas=[...new Set(appData.facilities.map(f=>f.area||'その他'))];
+  if(!areas.length){ document.getElementById('schedule-list').innerHTML='<div class="empty-state"><div class="empty-state-text">施設が登録されていません</div></div>'; return; }
+  const sched=appData.schedule||{};
+  document.getElementById('schedule-list').innerHTML=areas.map(area=>{
+    const s=sched[area]||{};
+    const count=appData.facilities.filter(f=>(f.area||'その他')===area).length;
+    const defaultDay=area==='白州'?'木曜日':'火曜日';
+    return `<div class="section-card">
+      <div class="section-card-header">📍 ${area}エリア <span style="font-size:12px;color:var(--gray-400);font-weight:400;">${count}施設・原則${defaultDay}</span></div>
+      <div class="section-card-body">
+        <div class="form-row"><label>次回配送日①（この日付が施設に表示されます）</label><input type="date" id="sched-date-${area}" value="${s.nextDeliveryDate||''}"></div>
+        <div class="form-row"><label>注文締切①</label><input type="date" id="sched-deadline-${area}" value="${s.orderDeadline||''}"></div>
+        <div class="divider"></div>
+        <div class="form-row"><label>次回配送日②（繁忙期の2回目・任意）</label><input type="date" id="sched-date2-${area}" value="${s.nextDeliveryDate2||''}"></div>
+        <div class="form-row"><label>注文締切②（任意）</label><input type="date" id="sched-deadline2-${area}" value="${s.orderDeadline2||''}"></div>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:4px;">※すべて空欄にすると自動計算（毎週${defaultDay}・締切前週水曜15時）に戻ります</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+async function saveSchedule() {
+  const areas=[...new Set(appData.facilities.map(f=>f.area||'その他'))];
+  if(!appData.schedule) appData.schedule={};
+  areas.forEach(area=>{
+    const d1=document.getElementById('sched-date-'+area).value;
+    const dl1=document.getElementById('sched-deadline-'+area).value;
+    const d2=document.getElementById('sched-date2-'+area).value;
+    const dl2=document.getElementById('sched-deadline2-'+area).value;
+    if(!d1&&!dl1&&!d2&&!dl2){ delete appData.schedule[area]; }
+    else appData.schedule[area]={ nextDeliveryDate:d1||'', orderDeadline:dl1||'', nextDeliveryDate2:d2||'', orderDeadline2:dl2||'' };
+  });
+  showToast('保存中...','info'); await saveData();
+  showToast('配送日設定を保存しました');
 }
 
 // ===== ROUTE (drag) =====
@@ -1584,7 +1704,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded',()=>{
   document.getElementById('login-pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
-  const today=new Date().toISOString().slice(0,10);
+  const today=toLocalISO(new Date());
   ['delivery-date','summary-date','notes-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});
   const im=document.getElementById('invoice-month'); if(im)im.value=today.slice(0,7);
   initDrag();

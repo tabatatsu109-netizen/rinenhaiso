@@ -269,6 +269,13 @@
     .print-total-box { border: 2px solid #333; display: inline-block; padding: 3mm 8mm; font-size: 14pt; font-weight: 700; margin-top: 4mm; }
     .print-flex { display: flex; justify-content: space-between; align-items: flex-start; }
     .print-big-row td { font-size: 14pt; font-weight: 700; padding: 4mm; }
+    /* 契約書専用：1枚に収める圧縮モード */
+    #print-area.print-contract { padding: 8mm; font-size: 9pt; }
+    #print-area.print-contract .print-doc-title { font-size: 15pt; margin-bottom: 3mm; letter-spacing: 3px; }
+    #print-area.print-contract .print-meta { font-size: 9pt; line-height: 1.5; }
+    #print-area.print-contract .print-table th, #print-area.print-contract .print-table td { padding: 1.2mm 2mm; font-size: 8.5pt; }
+    #print-area.print-contract .print-table { margin: 2mm 0; }
+    @page { margin: 8mm; }
   }
 </style>
 </head>
@@ -1593,25 +1600,40 @@ function renderContractsAdmin() {
     return `<div class="doc-item"><div class="doc-info">
       <div class="doc-title">${f.name} <span class="${consent?'badge-paid':'badge-unpaid'}">${consent?'同意済':'未同意'}</span></div>
       <div class="doc-meta">${consent?`同意日時：${new Date(consent.agreedAt).toLocaleString('ja-JP')}<br>署名者：${consent.signerName}`:'マイページに同意のお願いが表示されています'}</div></div>
-    ${consent?`<div class="doc-actions"><button class="doc-btn" onclick="printConsent('${f.id}')">📄 同意書</button></div>`:''}
+    ${consent?`<div class="doc-actions" style="flex-direction:column;"><button class="doc-btn" onclick="printConsent('${f.id}')">📄 同意書</button><button class="facility-del-btn" onclick="resetContract('${f.id}')">同意リセット</button></div>`:''}
     </div>`;
   }).join('');
+}
+async function resetContract(facilityId) {
+  const f=appData.facilities.find(x=>x.id===facilityId)||{};
+  if(!confirm(`「${f.name}」の契約同意をリセットして未同意に戻しますか？\n（施設マイページに再度、同意のお願いが表示されます）`)) return;
+  appData.contracts=appData.contracts.filter(c=>c.facilityId!==facilityId);
+  showToast('保存中...','info'); await saveData();
+  renderContractsAdmin(); renderDashboard();
+  showToast('契約同意をリセットしました');
 }
 function printConsent(facilityId) {
   const consent=appData.contracts.find(x=>x.facilityId===facilityId&&x.agreed); if(!consent)return;
   const f=appData.facilities.find(x=>x.id===facilityId)||{};
-  const terms=contractTermsHtml().replace('<div class="contract-terms">','<div style="font-size:9.5pt;line-height:1.8;">').replace(/<h4>/g,'<div style="font-weight:700;margin-top:3mm;color:#1a5f7a;">').replace(/<\/h4>/g,'</div>');
-  openPrint(`<div class="print-doc-title" style="font-size:16pt;">リネン注文システム利用契約書</div>
-    <div class="print-meta">施設名：<strong>${consent.facilityName}</strong>　御中<br>住所：${f.address||'—'}</div>
+  const terms=contractTermsHtml().replace('<div class="contract-terms">','<div style="font-size:8pt;line-height:1.45;">').replace(/<h4>/g,'<span style="font-weight:700;color:#1a5f7a;">').replace(/<\/h4>/g,'</span> ');
+  openPrint(`<div class="print-doc-title">リネン注文システム利用契約書</div>
+    <div class="print-meta" style="margin-bottom:2mm;">施設名：<strong>${consent.facilityName}</strong>　御中　／　住所：${f.address||'—'}</div>
     ${terms}
-    <table class="print-table" style="margin-top:5mm;">
-      <tr><th style="width:40mm;">同意日時</th><td>${new Date(consent.agreedAt).toLocaleString('ja-JP')}</td></tr>
-      <tr><th>署名者（氏名）</th><td style="font-size:13pt;font-weight:700;">${consent.signerName}</td></tr>
-      <tr><th>手書き署名</th><td>${consent.signImage?`<img src="${consent.signImage}" style="height:20mm;">`:'（記録なし）'}</td></tr>
-      <tr><th>契約バージョン</th><td>${consent.contractVersion||'—'}</td></tr>
-      <tr><th>記録情報</th><td style="font-size:8pt;">${consent.agent||''}</td></tr>
+    <table class="print-table" style="margin-top:3mm;">
+      <tr>
+        <th style="width:26mm;">同意日時</th><td style="width:52mm;">${new Date(consent.agreedAt).toLocaleString('ja-JP')}</td>
+        <th style="width:22mm;">署名者</th><td style="font-weight:700;">${consent.signerName}</td>
+      </tr>
+      <tr>
+        <th>手書き署名</th>
+        <td colspan="3" style="text-align:center;">${consent.signImage?`<img src="${consent.signImage}" style="height:16mm;">`:'（記録なし）'}</td>
+      </tr>
+      <tr>
+        <th>契約バージョン</th><td>${consent.contractVersion||'—'}</td>
+        <th>記録情報</th><td style="font-size:7pt;word-break:break-all;">${consent.agent||''}</td>
+      </tr>
     </table>
-    <div style="font-size:8.5pt;margin-top:3mm;">本契約書は電子的に記録された同意情報に基づいて発行されています。</div>`);
+    <div style="font-size:8pt;margin-top:2mm;">本契約書は電子的に記録された同意情報に基づいて発行されています。</div>`, true);
 }
 
 // ===== SCHEDULE (配送日設定) =====
@@ -1692,8 +1714,10 @@ async function changePassword() {
   showPage('page-home');
 }
 // ===== PRINT =====
-function openPrint(html) {
-  document.getElementById('print-area').innerHTML=html;
+function openPrint(html, compact) {
+  const area=document.getElementById('print-area');
+  area.innerHTML=html;
+  area.classList.toggle('print-contract', !!compact);
   setTimeout(()=>window.print(),100);
 }
 

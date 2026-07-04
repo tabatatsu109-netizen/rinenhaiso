@@ -255,6 +255,23 @@
   .sub-tab { flex: 1; padding: 11px; text-align: center; border-radius: 10px; background: white; border: 2px solid var(--gray-200); font-size: 14px; font-weight: 700; color: var(--gray-600); cursor: pointer; }
   .sub-tab.active { border-color: var(--primary); background: var(--accent); color: var(--primary); }
 
+  /* 配送一覧（当日運用・スマホ前提） */
+  .dlv-row { padding: 12px 14px; border-bottom: 1px solid var(--gray-100); }
+  .dlv-row:last-child { border-bottom: none; }
+  .dlv-row.done { background: #f0faf4; }
+  .dlv-row.done .dlv-name { color: var(--gray-400); }
+  .dlv-top { display: flex; align-items: center; gap: 10px; }
+  .dlv-name { flex: 1; font-size: 15px; font-weight: 700; min-width: 0; }
+  .dlv-done-btn { min-width: 80px; height: 44px; border-radius: 10px; border: 2px solid var(--gray-300); background: white; font-size: 13.5px; font-weight: 700; color: var(--gray-600); font-family: var(--font); cursor: pointer; flex-shrink: 0; }
+  .dlv-done-btn.done { background: var(--success); border-color: var(--success); color: white; }
+  .dlv-bottom { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+  .dlv-items { flex: 1; font-size: 13px; color: var(--gray-700); line-height: 1.6; min-width: 0; }
+  .dlv-tel { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border-radius: 10px; background: var(--accent); text-decoration: none; font-size: 19px; flex-shrink: 0; }
+  .dlv-move { display: flex; gap: 6px; flex-shrink: 0; }
+  .dlv-move button { width: 44px; height: 44px; border-radius: 10px; border: 2px solid var(--gray-300); background: white; font-size: 16px; color: var(--primary); cursor: pointer; font-family: var(--font); }
+  .dlv-move button:disabled { opacity: 0.3; }
+  .new-order-badge { background: #fff3cd; color: #856404; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 10px; margin-left: 6px; }
+
   /* PRINT */
   #print-area { display: none; }
   @media print {
@@ -339,6 +356,7 @@
       <div class="delivery-hero-deadline" id="delivery-hero-deadline"></div>
     </div>
     <div id="deadline-warning"></div>
+    <div id="edit-mode-banner"></div>
     <div class="copy-prev-card" id="copy-prev-card" style="display:none">
       <div class="copy-prev-title" id="copy-prev-title">📋 前回の注文</div>
       <div class="copy-prev-items" id="copy-prev-items"></div>
@@ -384,7 +402,7 @@
     </div>
     <div class="order-total-bar"><span class="order-total-label">合計金額（税別）</span><span class="order-total-amount" id="confirm-total">¥0</span></div>
     <div class="notice">内容をご確認のうえ、「注文を送信する」を押してください。</div>
-    <button class="btn btn-success" onclick="submitOrder()">✓ 注文を送信する</button>
+    <button class="btn btn-success" id="confirm-submit-btn" onclick="submitOrder()">✓ 注文を送信する</button>
     <div class="mt-16"><button class="btn btn-gray" onclick="showPage('page-order')">← 内容を修正する</button></div>
   </div>
 </div>
@@ -498,9 +516,12 @@
     <div class="admin-tab" data-tab="schedule" onclick="switchAdminTab('schedule')">配送日設定</div>
     <div class="admin-tab" data-tab="route" onclick="switchAdminTab('route')">配送順</div>
     <div class="admin-tab" data-tab="summary" onclick="switchAdminTab('summary')">準備集計</div>
+    <div class="admin-tab" data-tab="stock" onclick="switchAdminTab('stock')">在庫</div>
+    <div class="admin-tab" data-tab="supplier" onclick="switchAdminTab('supplier')">発注書</div>
     <div class="admin-tab" data-tab="notes" onclick="switchAdminTab('notes')">納品書</div>
     <div class="admin-tab" data-tab="invoices" onclick="switchAdminTab('invoices')">請求書</div>
     <div class="admin-tab" data-tab="contracts" onclick="switchAdminTab('contracts')">契約管理</div>
+    <div class="admin-tab" data-tab="keiei" onclick="switchAdminTab('keiei')">🔒経営</div>
   </div>
 
   <div class="admin-content active" id="admin-dash">
@@ -508,6 +529,13 @@
     <div class="section-card">
       <div class="section-card-header">📢 お知らせ配信 <button class="btn btn-primary btn-inline btn-sm" onclick="openAddNews()">＋ 新規</button></div>
       <div class="section-card-body" id="news-admin-list"></div>
+    </div>
+    <div class="section-card">
+      <div class="section-card-header">🛟 バックアップ</div>
+      <div class="section-card-body">
+        <button class="btn btn-secondary btn-sm" onclick="exportBackup()">📥 全データをJSONでダウンロード</button>
+        <div style="font-size:12px;color:var(--gray-400);margin-top:8px;">障害時の復旧用です。月に1回程度ダウンロードして保管してください。</div>
+      </div>
     </div>
   </div>
 
@@ -531,6 +559,9 @@
   </div>
 
   <div class="admin-content" id="admin-orders">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px;">
+      <button class="btn btn-primary btn-inline btn-sm" onclick="openPhoneOrder()">📞 ＋ 電話注文を登録</button>
+    </div>
     <div class="search-bar">
       <input type="text" id="order-search-facility" placeholder="🔍 施設名で検索" oninput="renderOrders()">
       <input type="date" id="order-search-date" onchange="renderOrders()">
@@ -586,7 +617,7 @@
       <label style="font-size:14px;font-weight:600;">配送日</label>
       <input type="date" id="notes-date" onchange="renderNotesAdmin()">
     </div>
-    <div class="notice">配送日の注文から納品書を発行できます。発行済みは一覧に表示されます。</div>
+    <div class="notice">納品書は<strong>配送一覧で「済」を入れると自動発行</strong>されます（施設側でも閲覧可）。ここでは手動発行・再印刷・日付変更・削除ができます。</div>
     <div id="notes-issue-list"></div>
     <div style="font-size:15px;font-weight:700;color:#334155;margin:18px 0 10px;">発行済み納品書</div>
     <div id="notes-issued-list"></div>
@@ -606,6 +637,33 @@
     <div class="notice">各施設のシステム利用同意状況です。未同意の施設はマイページに警告が表示されます。</div>
     <div id="contracts-list"></div>
   </div>
+
+  <div class="admin-content" id="admin-stock">
+    <div class="notice">配送一覧で「済」を入れると自動で出庫されます。毎週の在庫確認では実際に数えた枚数を入力して「棚卸を保存」してください（<strong>実際の数が常に正</strong>）。</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+      <div style="font-size:15px;font-weight:700;color:#334155;">倉庫在庫 <span id="stock-season" style="font-size:12px;color:var(--gray-400);font-weight:400;"></span></div>
+      <button class="btn btn-secondary btn-inline btn-sm" id="winter-toggle" onclick="toggleWinter()">切替</button>
+    </div>
+    <div id="stock-list"></div>
+    <div class="mt-16"><button class="btn btn-primary" onclick="saveStocktake()">✓ 棚卸を保存する（入力した品目のみ上書き）</button></div>
+    <div style="font-size:15px;font-weight:700;color:#334155;margin:18px 0 10px;">入出庫履歴</div>
+    <div id="stock-logs"></div>
+  </div>
+
+  <div class="admin-content" id="admin-supplier">
+    <div class="notice">発注数 ＝ <strong>在庫不足分（安全在庫−現在庫）＋ 施設注文分</strong> を発注単位で切り上げ。確定後はヤマシタ指定Excelと同じ並び順の転記表が表示されます。</div>
+    <div class="search-bar">
+      <label style="font-size:13px;font-weight:600;">ヤマシタ納品日</label><input type="date" id="sup-delivery-date">
+      <label style="font-size:13px;font-weight:600;">施設配送日</label><input type="date" id="sup-facility-date">
+      <button class="btn btn-primary btn-inline btn-sm" onclick="calcSupplierOrder()">計算</button>
+    </div>
+    <div id="sup-deadline" style="font-size:13px;font-weight:700;color:var(--danger);margin-bottom:10px;"></div>
+    <div id="sup-calc"></div>
+    <div style="font-size:15px;font-weight:700;color:#334155;margin:18px 0 10px;">発注履歴</div>
+    <div id="sup-history"></div>
+  </div>
+
+  <div class="admin-content" id="admin-keiei"><div id="keiei-body"></div></div>
 </div>
 
 <!-- MODAL: FACILITY -->
@@ -655,6 +713,16 @@
       <div class="form-row"><label>表示順</label><input type="number" id="item-sortOrder" min="1"></div>
     </div>
     <div class="form-row"><label>有効・無効</label><select id="item-active"><option value="true">有効</option><option value="false">無効</option></select></div>
+    <div style="font-size:13px;font-weight:700;color:var(--primary);margin:14px 0 6px;border-top:1px solid var(--gray-100);padding-top:12px;">仕入・発注情報（ヤマシタ）</div>
+    <div class="form-row-2col">
+      <div class="form-row"><label>仕入単価（税別）</label><input type="number" id="item-cost" min="0"></div>
+      <div class="form-row"><label>発注単位（枚）</label><input type="number" id="item-orderUnit" min="1"></div>
+    </div>
+    <div class="form-row"><label>ヤマシタ商品コード</label><input type="text" id="item-ycode" placeholder="R01120006"></div>
+    <div class="form-row-2col">
+      <div class="form-row"><label>安全在庫（通常）</label><input type="number" id="item-safety" min="0"></div>
+      <div class="form-row"><label>安全在庫（冬季）</label><input type="number" id="item-safetyW" min="0"></div>
+    </div>
     <button class="btn btn-primary" onclick="saveItem()">✓ 保存する</button>
     <div class="mt-16"><button class="btn btn-gray" onclick="closeModal('modal-item')">キャンセル</button></div>
   </div>
@@ -681,35 +749,47 @@
   </div>
 </div>
 
+<!-- MODAL: PHONE ORDER（⑥締切後の電話注文を管理者が代理入力） -->
+<div class="modal-overlay" id="modal-phone">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('modal-phone')">×</button>
+    <div class="modal-title">📞 電話注文の登録</div>
+    <div class="form-row"><label>施設 *</label><select id="phone-facility" onchange="phoneFacilityChanged()"></select></div>
+    <div class="form-row"><label>配送日 *</label><input type="date" id="phone-date"></div>
+    <div class="form-row"><label>配送区分</label><select id="phone-type"><option value="both">納品＋回収</option><option value="return">回収のみ</option></select></div>
+    <div style="margin:6px 0 10px;"><button class="btn btn-secondary btn-sm" onclick="copyPhonePrev()">📋 この施設の前回注文をコピー</button></div>
+    <div style="font-size:14px;font-weight:700;color:var(--primary);margin:8px 0 4px;">品目（束数）</div>
+    <div id="phone-items"></div>
+    <div class="form-row" style="margin-top:12px;"><label>メモ（任意・施設には表示されません）</label><textarea id="phone-memo" placeholder="例：7/4 10:30 電話受付 田中様"></textarea></div>
+    <button class="btn btn-primary" onclick="submitPhoneOrder()">✓ 注文を登録する</button>
+    <div class="mt-16"><button class="btn btn-gray" onclick="closeModal('modal-phone')">キャンセル</button></div>
+  </div>
+</div>
+
 <div id="print-area"></div>
 
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script>
 // ===== CONFIG =====
-const JSONBIN_KEY = '$2a$10$xopawUKPa.2MV76.BGLZtehG8EauPnBwXLLyCgXqw/H5NfvD.yuOq';
-const JSONBIN_BIN = '6a264fa6da38895dfe97bfef';
-const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+// Firebase（Firestore）。apiKeyは公開可能な識別子で、権限はFirestoreセキュリティルール側で制御している
+const firebaseConfig = {
+  apiKey: "AIzaSyDw22AlTbmr6K7gQZxAQdp0b2lFP4FQ52E",
+  authDomain: "rinen-77239.firebaseapp.com",
+  projectId: "rinen-77239",
+  storageBucket: "rinen-77239.firebasestorage.app",
+  messagingSenderId: "1013788753831",
+  appId: "1:1013788753831:web:1136872fe0bbe2042d8082"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+// オフライン永続化（配送先で電波が不安定でも閲覧・再送信できる）
+try { db.enablePersistence({ synchronizeTabs: true }).catch(()=>{}); } catch(e) {}
 const ADMIN_ID = 'no football';
 const ADMIN_PW = '2001';
 const SYSTEM_FEE = 1000;   // 月額システム利用料（税別）
 const TAX_RATE = 0.10;     // 消費税10%
-
-// ===== DEFAULT ITEMS（2025年7月1日〜 新単価） =====
-const DEFAULT_FACILITIES = [{"id":"aoisora","name":"B&B 蒼い空","pw":"1234","address":"北杜市小淵沢町上笹尾3332-275","tel":"0551-36-5975","contact":"府川 宏","email":"bb-aoisora@bf6.so-net.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":1,"systemFee":true,"note":""},{"id":"casaboo","name":"casa boo","pw":"1234","address":"","tel":"080-7321-7092","contact":"菅野","email":"bootsuku1970@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":2,"systemFee":true,"note":""},{"id":"lampslodge","name":"Lamps Lodge（ランプスロッヂ）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1107","tel":"0551-36-3556","contact":"小林 努","email":"info@lampslodge.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":3,"systemFee":true,"note":""},{"id":"malaika","name":"MALAIKA（マライカ）","pw":"1234","address":"北杜市小淵沢町10083-2","tel":"080-5524-7418","contact":"佐藤 里花","email":"pension.malaika@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":4,"systemFee":true,"note":""},{"id":"warmingup","name":"WARMING UP（ウォーミングアップ）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1218","tel":"0551-36-4171","contact":"浦部 良","email":"p.warmingup@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":5,"systemFee":true,"note":""},{"id":"ascot","name":"ガストホフ アスコット","pw":"1234","address":"北杜市小淵沢町10124-1","tel":"0551-36-4521","contact":"中安 二郎","email":"ascot@pension.or.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":6,"systemFee":true,"note":""},{"id":"countrymama","name":"カントリーママ","pw":"1234","address":"北杜市小淵沢町10214-4","tel":"0551-36-4621","contact":"光山 真理","email":"yada@p-mama.net","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":7,"systemFee":true,"note":""},{"id":"den","name":"ステンドハウスDEN（でん）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1555","tel":"090-1463-2183","contact":"田畑 雅宏","email":"goal@den.gr.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":8,"systemFee":true,"note":""},{"id":"makiba","name":"テニスハウス まきば","pw":"1234","address":"北杜市小淵沢町10183-1","tel":"090-2332-3885","contact":"小林 千鶴子","email":"makiba@ruby.plala.or.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":9,"systemFee":true,"note":""},{"id":"heartandheart","name":"ハート＆ハート","pw":"1234","address":"北杜市小淵沢町10088-9","tel":"0551-36-3281","contact":"井上 健","email":"","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":10,"systemFee":true,"note":""},{"id":"flyingspoon","name":"ヒュッテフライングスプーン","pw":"1234","address":"北杜市長坂町大井ヶ森985-6","tel":"0551-32-7727","contact":"","email":"f-spoon@mx3.nns.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":11,"systemFee":true,"note":""},{"id":"blanche","name":"ブランシェ杜","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1106","tel":"0551-45-7293","contact":"松本 美子","email":"eizi1129@icloud.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":12,"systemFee":true,"note":""},{"id":"place8","name":"プレイス 八ヶ岳 ロッジ＆コテージ","pw":"1234","address":"","tel":"","contact":"渡辺","email":"tukke@me.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":13,"systemFee":true,"note":""},{"id":"field","name":"ペンション フィールド","pw":"1234","address":"北杜市小淵沢町6700","tel":"0551-36-5341","contact":"","email":"mail@p-field.net","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":14,"systemFee":true,"note":""},{"id":"buttondown","name":"ペンション ボタンダウン","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1493","tel":"0551-36-4126","contact":"下坂 勇","email":"button@ruby.plala.or.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":15,"systemFee":true,"note":""},{"id":"pollyanna","name":"ペンション ポリアンナ","pw":"1234","address":"北杜市小淵沢町2790-2","tel":"0551-36-3954","contact":"持田 豊","email":"polly@pollyanna.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":16,"systemFee":true,"note":""},{"id":"morningmist","name":"ペンション モーニングミスト","pw":"1234","address":"北杜市長坂町小荒間1325-19","tel":"0551-20-4317","contact":"藤田 宣彦","email":"info@morning-mist.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":17,"systemFee":true,"note":""},{"id":"wa","name":"ペンション わっ！","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1482","tel":"080-5038-7353","contact":"澤 晴美","email":"p-wa@sawa.gr.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":18,"systemFee":true,"note":""},{"id":"shiroikouma","name":"ペンション 白い仔馬","pw":"1234","address":"北杜市小淵沢町10089-4","tel":"0551-36-4150","contact":"久保田 昭次","email":"kouma@eps4.comlink.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":19,"systemFee":true,"note":""},{"id":"albion","name":"ペンションあるびおん","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1157","tel":"0551-36-4166","contact":"市川 進","email":"p-albion@p-albion.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":20,"systemFee":true,"note":""},{"id":"watching","name":"ペンションうぉっちんぐ","pw":"1234","address":"北杜市小淵沢町上笹尾3332-366","tel":"0551-36-3775","contact":"吉林 昴","email":"info@p-watching.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":21,"systemFee":true,"note":""},{"id":"maronkurin","name":"マロン＆クリン","pw":"1234","address":"北杜市長坂町白井沢3137-2","tel":"0551-32-5569","contact":"池畑 美香","email":"kurin-211-dog@docomo.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":22,"systemFee":true,"note":""},{"id":"shimaya","name":"画家の宿 志満屋（しまや）","pw":"1234","address":"北杜市長坂町富岡54-1","tel":"0551-32-3068","contact":"","email":"info@gakanoyadoshimaya.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":23,"systemFee":true,"note":""},{"id":"owl","name":"懐石の宿 アウル","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1610","tel":"0551-36-4541","contact":"石井 仁","email":"owljin0429@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":24,"systemFee":true,"note":""},{"id":"gekkasosha","name":"月下草舎（げっかそうしゃ）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-270","tel":"0551-36-4801","contact":"笹沼 郁夫","email":"lua@gekkasosha.net","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":25,"systemFee":true,"note":""},{"id":"issaku","name":"古守宿一作","pw":"1234","address":"北杜市小淵沢町松向215-1","tel":"0551-36-5858","contact":"新海 篤一","email":"zxwii0fk3ngrcbfpe67w@docomo.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":26,"systemFee":true,"note":""},{"id":"hibikino","name":"自然の宿 響野（ひびきの）","pw":"1234","address":"北杜市小淵沢町上笹尾3332-504","tel":"0551-36-5441","contact":"清水 雅子","email":"hibiki@sun.gmobb.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":27,"systemFee":true,"note":""},{"id":"jinjosho","name":"尋常高等小学荘","pw":"1234","address":"北杜市小淵沢町10210","tel":"0551-36-3010","contact":"進藤 康江","email":"","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":28,"systemFee":true,"note":""},{"id":"mahounofue","name":"西洋民宿 魔法の笛","pw":"1234","address":"北杜市小淵沢町上笹尾3332-160","tel":"0551-36-6554","contact":"","email":"mahounofue@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":29,"systemFee":true,"note":""},{"id":"izumien","name":"泉園","pw":"1234","address":"北杜市小淵沢町1959","tel":"0551-36-4018","contact":"田中 秀知","email":"info@izumien.info","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":30,"systemFee":true,"note":""},{"id":"nagasakakh","name":"長坂観光ホテル","pw":"1234","address":"北杜市長坂町長坂上条2531","tel":"0551-32-2273","contact":"河合 秀明","email":"main@nagasakakh.rdy.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":31,"systemFee":true,"note":""},{"id":"ponyyh","name":"八ヶ岳ポニーユースホステル","pw":"1234","address":"北杜市小淵沢町上笹尾3332-1911","tel":"0551-36-6401","contact":"原沢 匠","email":"yatsugatake@ponyyh.sunnyday.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":32,"systemFee":true,"note":""},{"id":"furo","name":"風路（ふうろ）","pw":"1234","address":"北杜市小淵沢町10122-15","tel":"0551-36-3826","contact":"佐藤 和子","email":"furo@p-furo.net","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":33,"systemFee":true,"note":""},{"id":"seminarhouse","name":"八ヶ岳セミナーハウス","pw":"1234","address":"","tel":"","contact":"細川 英雄","email":"hideo.hosokawa@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":34,"systemFee":true,"note":""},{"id":"esperanto","name":"八ヶ岳エスペラント館","pw":"1234","address":"","tel":"","contact":"堀 泰雄","email":"yasuyoshigehiro@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":35,"systemFee":true,"note":""},{"id":"daisho","name":"DAISHO","pw":"1234","address":"","tel":"","contact":"","email":"yatugatakedaisho@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":36,"systemFee":true,"note":""},{"id":"rapisuri","name":"ヴィラ・ラピスラズリ","pw":"1234","address":"","tel":"","contact":"","email":"rapisuri20210301@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":37,"systemFee":true,"note":""},{"id":"laramie","name":"ララミー牧場","pw":"1234","address":"","tel":"","contact":"","email":"s313h1225t227@softbank.ne.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":38,"systemFee":true,"note":""},{"id":"kiyoharu","name":"清春芸術村","pw":"1234","address":"","tel":"","contact":"","email":"kiyoharu.art.colony@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":39,"systemFee":true,"note":""},{"id":"anjour","name":"お掃除本舗 甲府大里店（アンジュール）","pw":"1234","address":"","tel":"","contact":"シマダ","email":"tubatsnaoya@i.softbank.jp","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":40,"systemFee":true,"note":""},{"id":"tyy8","name":"TYY八ヶ岳BASE","pw":"1234","address":"","tel":"","contact":"","email":"lifesquare.yamauchi@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":41,"systemFee":true,"note":""},{"id":"yutaka","name":"アグリツーリズモユタカ","pw":"1234","address":"","tel":"","contact":"ババ ユタカ","email":"ottantottofarm@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":42,"systemFee":true,"note":""},{"id":"forestanddog","name":"八ヶ岳ヴィラ フォレスト＆ドッグ","pw":"1234","address":"","tel":"","contact":"","email":"forestanddoggy@gmail.com","area":"小淵沢・長坂","deliveryDay":"火曜日","routeOrder":43,"systemFee":true,"note":""},{"id":"bbandb","name":"ペンションB＆B白州","pw":"1234","address":"","tel":"","contact":"小池 伸明","email":"info@hakushu.info","area":"白州","deliveryDay":"火曜日","routeOrder":44,"systemFee":true,"note":""},{"id":"seishinkan","name":"正心之館","pw":"1234","address":"","tel":"","contact":"蓑輪 勝","email":"seisinkan-shizu919@ezweb.ne.jp","area":"白州","deliveryDay":"火曜日","routeOrder":45,"systemFee":true,"note":""},{"id":"casademonte","name":"ペンション カサデモンテ白州","pw":"1234","address":"","tel":"","contact":"國澤 俊","email":"pcasademonte@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":46,"systemFee":true,"note":""},{"id":"village","name":"ヴィレッヂ白州","pw":"1234","address":"","tel":"","contact":"小林 富士男","email":"village.hakushu@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":47,"systemFee":true,"note":""},{"id":"bornfree","name":"ペンションボーンフリー","pw":"1234","address":"","tel":"","contact":"伊沢 雅博","email":"2525hitomisan@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":48,"systemFee":true,"note":""},{"id":"hanashakushu","name":"花白州","pw":"1234","address":"","tel":"","contact":"大竹 誠一","email":"kenari@nifty.com","area":"白州","deliveryDay":"火曜日","routeOrder":49,"systemFee":true,"note":""},{"id":"bigland","name":"オートリゾートパーク・ビッグランド","pw":"1234","address":"","tel":"","contact":"進藤 修次","email":"info@bigland.co.jp","area":"白州","deliveryDay":"火曜日","routeOrder":50,"systemFee":true,"note":""},{"id":"kaikoma","name":"ゲストハウス甲斐駒","pw":"1234","address":"","tel":"","contact":"","email":"kanto.2326@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":51,"systemFee":true,"note":""},{"id":"foster","name":"白州フォスターヴィレッジ","pw":"1234","address":"","tel":"","contact":"","email":"","area":"白州","deliveryDay":"火曜日","routeOrder":52,"systemFee":true,"note":""},{"id":"humanbeing","name":"Human BeING","pw":"1234","address":"","tel":"","contact":"","email":"yogaterior.com@gmail.com","area":"白州","deliveryDay":"火曜日","routeOrder":53,"systemFee":true,"note":""},{"id":"mydear","name":"glamping My dear","pw":"1234","address":"","tel":"","contact":"","email":"sayaka-umehara@great-scenery.com","area":"白州","deliveryDay":"火曜日","routeOrder":54,"systemFee":true,"note":""}];
-
-const DEFAULT_ITEMS = [
-  { id:'item_1',  name:'シーツ', size:'137', sizeSpec:'137cm × 275cm（和布団用）', unitPrice:220, bundleQty:10, bundlePrice:2200, active:true, sortOrder:1 },
-  { id:'item_2',  name:'シーツ', size:'S',   sizeSpec:'180cm × 320cm（シングルベッド用）', unitPrice:225, bundleQty:10, bundlePrice:2250, active:true, sortOrder:2 },
-  { id:'item_3',  name:'シーツ', size:'W',   sizeSpec:'228cm × 320cm（セミダブル用）', unitPrice:230, bundleQty:10, bundlePrice:2300, active:true, sortOrder:3 },
-  { id:'item_4',  name:'枕カバー', size:'50×90', sizeSpec:'50cm × 90cm（ピロケース）', unitPrice:120, bundleQty:50, bundlePrice:6000, active:true, sortOrder:4 },
-  { id:'item_5',  name:'額包布', size:'和布団用', sizeSpec:'155cm × 210cm（掛布団カバー）', unitPrice:270, bundleQty:10, bundlePrice:2700, active:true, sortOrder:5 },
-  { id:'item_6',  name:'浴衣', size:'M', sizeSpec:'着丈150cm', unitPrice:185, bundleQty:10, bundlePrice:1850, active:true, sortOrder:6 },
-  { id:'item_7',  name:'浴衣', size:'L', sizeSpec:'着丈150cm', unitPrice:185, bundleQty:10, bundlePrice:1850, active:true, sortOrder:7 },
-  { id:'item_8',  name:'バスタオル', size:'—', sizeSpec:'750g/打・白', unitPrice:180, bundleQty:10, bundlePrice:1800, active:true, sortOrder:8 },
-  { id:'item_9',  name:'フェイスタオル', size:'—', sizeSpec:'340g/打・白', unitPrice:120, bundleQty:20, bundlePrice:2400, active:true, sortOrder:9 },
-  { id:'item_10', name:'バスマット', size:'—', sizeSpec:'650g/打・白', unitPrice:160, bundleQty:10, bundlePrice:1600, active:true, sortOrder:10 },
-  { id:'item_11', name:'デュベカバー', size:'180', sizeSpec:'180cm幅', unitPrice:400, bundleQty:10, bundlePrice:4000, active:true, sortOrder:11 },
-  { id:'item_12', name:'デュベカバー', size:'200', sizeSpec:'200cm幅', unitPrice:420, bundleQty:10, bundlePrice:4200, active:true, sortOrder:12 },
-];
 
 // ===== 契約条件（覚書より） =====
 const CONTRACT_TERMS = {
@@ -723,7 +803,8 @@ const CONTRACT_TERMS = {
 
 // ===== STATE =====
 let currentUser = null;
-let appData = { facilities:[], items:[], orders:[], deliveryNotes:[], invoices:[], contracts:[], news:[], schedule:{} };
+let appData = { facilities:[], items:[], orders:[], deliveryNotes:[], invoices:[], contracts:[], news:[], schedule:{},
+  stock:{}, winterMode:false, stockLogs:[], supplierOrders:[], supplierInvoices:[] };
 let orderBundles = {};
 let editingFacilityId = null, editingItemId = null;
 let currentOrderFilter = 'all';
@@ -740,37 +821,103 @@ const dayMap = {月曜日:1,火曜日:2,水曜日:3,木曜日:4,金曜日:5,土�
 function fmtDate(iso){ const [y,m,d]=iso.split('-'); return `${y}年${parseInt(m)}月${parseInt(d)}日（${dayNames[new Date(iso).getDay()]}）`; }
 function itemLabel(i){ return i.name + (i.size && i.size!=='—' ? ' ' + i.size : ''); }
 
-// ===== JSONBIN =====
-async function binGet() {
-  const res = await fetch(`${JSONBIN_BASE}/b/${JSONBIN_BIN}/latest`, { headers:{'X-Master-Key':JSONBIN_KEY} });
-  if (!res.ok) throw new Error('取得失敗:'+res.status);
-  return (await res.json()).record;
-}
-async function binSet(record) {
-  const res = await fetch(`${JSONBIN_BASE}/b/${JSONBIN_BIN}`, {
-    method:'PUT', headers:{'Content-Type':'application/json','X-Master-Key':JSONBIN_KEY},
-    body: JSON.stringify(record)
+// ===== FIRESTORE データ層 =====
+// JSONBin時代の「全量PUT」と違い、1件＝1ドキュメントで書き込むため
+// 施設の注文と管理者の操作が同時でもデータが消えない
+let _authReady = null;
+function ensureAuth() {
+  if (!_authReady) _authReady = new Promise((resolve, reject) => {
+    const unsub = firebase.auth().onAuthStateChanged(u => {
+      unsub();
+      if (u) resolve(u);
+      else firebase.auth().signInAnonymously().then(c => resolve(c.user), reject);
+    });
   });
-  if (!res.ok) throw new Error('保存失敗:'+res.status);
+  return _authReady;
 }
-async function loadData() {
-  const d = await binGet();
-  appData = {
-    facilities:    d.facilities    || [],
-    items:         d.items         || [],
-    orders:        d.orders        || [],
-    deliveryNotes: d.deliveryNotes || [],
-    invoices:      d.invoices      || [],
-    contracts:     d.contracts     || [],
-    news:          d.news          || [],
-    schedule:      d.schedule      || {},
-  };
-  if (appData.facilities.length === 0) { appData.facilities = DEFAULT_FACILITIES; await binSet(appData); }
-    if (appData.items.length === 0) { appData.items = DEFAULT_ITEMS; await binSet(appData); }
+const snapToArr = snap => snap.docs.map(d => d.data());
+
+// ログイン時に読む共通データ（施設・品目・お知らせ・配送日設定）
+async function loadCore() {
+  await ensureAuth();
+  const [fac, items, news, sched] = await Promise.all([
+    db.collection('facilities').get(),
+    db.collection('items').get(),
+    db.collection('news').get(),
+    db.collection('settings').doc('schedule').get(),
+  ]);
+  appData.facilities = snapToArr(fac);
+  appData.items = snapToArr(items);
+  appData.news = snapToArr(news);
+  appData.schedule = sched.exists ? (sched.data() || {}) : {};
 }
-async function saveData() {
-  try { await binSet(appData); }
-  catch(e){ showToast('保存失敗: '+e.message,'error'); }
+// 施設ログイン時：自施設のデータだけ読む（読み取り数の節約）
+async function loadFacilityData(fid) {
+  const byFac = coll => db.collection(coll).where('facilityId', '==', fid).get();
+  const [orders, notes, invoices, contracts] = await Promise.all([
+    byFac('orders'), byFac('deliveryNotes'), byFac('invoices'), byFac('contracts')]);
+  appData.orders = snapToArr(orders);
+  appData.deliveryNotes = snapToArr(notes);
+  appData.invoices = snapToArr(invoices);
+  appData.contracts = snapToArr(contracts);
+}
+// 管理者ログイン時：全データを読む
+async function loadAdminData() {
+  const [orders, notes, invoices, contracts, stockDoc, sOrders, sInv, sLogs] = await Promise.all([
+    db.collection('orders').get(), db.collection('deliveryNotes').get(),
+    db.collection('invoices').get(), db.collection('contracts').get(),
+    db.collection('settings').doc('stock').get(),
+    db.collection('supplierOrders').orderBy('createdAt','desc').limit(30).get(),
+    db.collection('supplierInvoices').get(),
+    db.collection('stockLogs').orderBy('createdAt','desc').limit(60).get()]);
+  appData.orders = snapToArr(orders);
+  appData.deliveryNotes = snapToArr(notes);
+  appData.invoices = snapToArr(invoices);
+  appData.contracts = snapToArr(contracts);
+  appData.stock = (stockDoc.exists && stockDoc.data().qty) || {};
+  appData.winterMode = stockDoc.exists && !!stockDoc.data().winter;
+  appData.supplierOrders = snapToArr(sOrders);
+  appData.supplierInvoices = snapToArr(sInv);
+  appData.stockLogs = snapToArr(sLogs);
+}
+
+// 書き込みヘルパー
+async function fsSet(coll, id, obj) {
+  try { await db.collection(coll).doc(id).set(obj); }
+  catch (e) { console.error(e); showToast('保存失敗: ' + e.message, 'error'); throw e; }
+}
+async function fsUpdate(coll, id, patch) {
+  try { await db.collection(coll).doc(id).set(patch, { merge: true }); }
+  catch (e) { console.error(e); showToast('保存失敗: ' + e.message, 'error'); throw e; }
+}
+async function fsDelete(coll, id) {
+  try { await db.collection(coll).doc(id).delete(); }
+  catch (e) { console.error(e); showToast('削除失敗: ' + e.message, 'error'); throw e; }
+}
+// まとめ書き込み（Firestoreのバッチ上限500に合わせ400件ずつ）
+async function commitOps(ops) {
+  try {
+    for (let i = 0; i < ops.length; i += 400) {
+      const batch = db.batch();
+      ops.slice(i, i + 400).forEach(op => {
+        const ref = db.collection(op.coll).doc(op.id);
+        if (op.type === 'delete') batch.delete(ref);
+        else if (op.type === 'update') batch.set(ref, op.data, { merge: true });
+        else batch.set(ref, op.data);
+      });
+      await batch.commit();
+    }
+  } catch (e) { console.error(e); showToast('保存失敗: ' + e.message, 'error'); throw e; }
+}
+// 採番（トランザクションで確保するため、同時注文でも番号が重複しない）
+async function nextSeq(key, n = 1) {
+  const ref = db.collection('counters').doc(key);
+  return db.runTransaction(async tx => {
+    const doc = await tx.get(ref);
+    const cur = doc.exists ? (doc.data().count || 0) : 0;
+    tx.set(ref, { count: cur + n });
+    return cur + 1;
+  });
 }
 
 // ===== TOAST =====
@@ -792,14 +939,16 @@ async function doLogin() {
   if (!id||!pw){ showToast('IDとパスワードを入力してください','error'); return; }
   showToast('確認中...','info');
   try {
-    await loadData();
+    await loadCore();
     if (id===ADMIN_ID && pw===ADMIN_PW) {
+      await loadAdminData();
       currentUser={id,name:'管理者',role:'admin'};
       showPage('page-admin'); switchAdminTab('dash');
       showToast('管理者としてログインしました'); return;
     }
     const f = appData.facilities.find(x=>x.id===id && x.pw===pw);
     if (!f){ showToast('IDまたはパスワードが違います','error'); return; }
+    await loadFacilityData(f.id);
     currentUser={id:f.id,name:f.name,role:'facility',facility:f};
     renderFacilityHome(); showPage('page-home');
     showToast(f.name+' でログインしました');
@@ -903,14 +1052,29 @@ function goToOrder() {
 
   const myOrders = appData.orders.filter(o=>o.facilityId===f.id).sort((a,b)=>b.createdAt.localeCompare(a.createdAt));
   const prev = myOrders[0];
+  window._prevOrderItems = (prev && prev.items) ? prev.items : [];
+
+  // ①締切前なら既存注文を変更モードで開く（重複注文の防止）
+  const editable = myOrders.filter(o=>o.deliveryDate===info.iso && o.status==='new' && !o.delivered)[0];
+  const bannerEl = document.getElementById('edit-mode-banner');
+  orderBundles={};
+  if (editable && now <= info.deadline) {
+    window._editingOrderId = editable.id;
+    (editable.items||[]).forEach(pi=>{ if(appData.items.find(i=>i.id===pi.itemId)) orderBundles[pi.itemId]=pi.bundleCount; });
+    document.getElementById(editable.type==='return'?'dt-return':'dt-both').checked = true;
+    bannerEl.innerHTML = `<div class="notice">✏️ この配送日の注文（${editable.id}）は<strong>送信済み</strong>です。締切までは内容を変更できます。修正して送信すると<strong>上書き</strong>されます（注文が2件になることはありません）。</div>`;
+  } else {
+    window._editingOrderId = null;
+    document.getElementById('dt-both').checked = true;
+    bannerEl.innerHTML = '';
+  }
+
   const pc = document.getElementById('copy-prev-card');
-  if (prev && prev.items && prev.items.length>0) {
+  if (!window._editingOrderId && prev && prev.items && prev.items.length>0) {
     pc.style.display='';
     document.getElementById('copy-prev-title').textContent = `📋 前回の注文（${fmtDate(prev.deliveryDate)}）`;
     document.getElementById('copy-prev-items').textContent = prev.items.map(i=>`${i.name}${i.size&&i.size!=='—'?' '+i.size:''}: ${i.bundleCount}束`).join('　');
-    window._prevOrderItems = prev.items;
-  } else { pc.style.display='none'; window._prevOrderItems=[]; }
-  orderBundles={};
+  } else { pc.style.display='none'; }
   renderOrderItems(); updateOrderTotal();
   showPage('page-order');
 }
@@ -955,6 +1119,7 @@ function goToConfirm() {
     return `<div class="confirm-row"><span class="confirm-label">${itemLabel(item)}</span><span class="confirm-value">${bc}束 / ${bc*item.bundleQty}枚<br><span style="font-size:12px;color:var(--gray-600)">${yen(tp)}</span></span></div>`;
   }).join('') : '<div class="confirm-row"><span class="confirm-label">品目なし（回収のみ）</span></div>';
   document.getElementById('confirm-total').textContent = yen(total);
+  document.getElementById('confirm-submit-btn').textContent = window._editingOrderId ? '✓ 変更を保存する' : '✓ 注文を送信する';
   showPage('page-confirm');
 }
 
@@ -964,8 +1129,6 @@ async function submitOrder() {
   const now = new Date();
   const info = nextDeliveryInfo(currentUser.facility);
   const dateStr = toLocalISO(now).replace(/-/g,'');
-  const seq = appData.orders.filter(o=>o.id.startsWith(dateStr)).length + 1;
-  const orderId = `${dateStr}-${String(seq).padStart(3,'0')}`;
   const items = appData.items.filter(i=>(orderBundles[i.id]||0)>0).map(item=>({
     itemId:item.id, name:item.name, size:item.size, bundleCount:orderBundles[item.id],
     bundleQty:item.bundleQty, totalQty:orderBundles[item.id]*item.bundleQty,
@@ -973,16 +1136,43 @@ async function submitOrder() {
   }));
   const totalAmount = items.reduce((s,i)=>s+i.totalPrice,0);
   const late = now > info.deadline;
-  appData.orders.push({ id:orderId, facilityId:currentUser.id, facilityName:currentUser.name,
-    deliveryDate:info.iso, type:typeEl?typeEl.value:'both', items, totalAmount,
-    status:'new', late, memo:'', createdAt:now.toISOString() });
   showToast('送信中...','info');
-  await saveData();
-  document.getElementById('order-number').textContent = orderId;
-  document.getElementById('complete-msg').innerHTML = `ご注文を受け付けました。<br>配送予定日：<strong>${fmtDate(info.iso)}</strong>${late?'<br><span style="color:var(--danger)">※締切後のため翌週になる場合があります</span>':''}`;
-  orderBundles={};
-  showPage('page-complete');
-  showToast('注文を送信しました');
+  try {
+    // ①変更モード：締切内なら既存注文を上書き（別タブ・二重送信でも重複しない）
+    let editing = window._editingOrderId ? appData.orders.find(o=>o.id===window._editingOrderId) : null;
+    if (!editing) {
+      editing = appData.orders.filter(o=>o.facilityId===currentUser.id && o.deliveryDate===info.iso && o.status==='new' && !o.delivered)
+        .sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0] || null;
+    }
+    if (editing) {
+      if (now > info.deadline) { showToast('締切を過ぎたため変更できません。お電話ください（080-9548-3411）','error'); return; }
+      const patch = { items, totalAmount, type:typeEl?typeEl.value:'both', updatedAt:now.toISOString() };
+      await fsUpdate('orders', editing.id, patch);
+      Object.assign(editing, patch);
+      window._editingOrderId = null;
+      document.getElementById('order-number').textContent = editing.id;
+      document.getElementById('complete-msg').innerHTML = `ご注文を<strong>変更</strong>しました。<br>配送予定日：<strong>${fmtDate(editing.deliveryDate)}</strong>`;
+      orderBundles={};
+      showPage('page-complete');
+      showToast('注文を変更しました');
+      return;
+    }
+    const seq = await nextSeq('orders_'+dateStr);
+    const orderId = `${dateStr}-${String(seq).padStart(3,'0')}`;
+    const order = { id:orderId, facilityId:currentUser.id, facilityName:currentUser.name,
+      deliveryDate:info.iso, type:typeEl?typeEl.value:'both', items, totalAmount,
+      status:'new', late, memo:'', createdAt:now.toISOString() };
+    await db.collection('orders').doc(orderId).set(order);
+    appData.orders.push(order);
+    document.getElementById('order-number').textContent = orderId;
+    document.getElementById('complete-msg').innerHTML = `ご注文を受け付けました。<br>配送予定日：<strong>${fmtDate(info.iso)}</strong>${late?'<br><span style="color:var(--danger)">※締切後のため翌週になる場合があります</span>':''}`;
+    orderBundles={};
+    showPage('page-complete');
+    showToast('注文を送信しました');
+  } catch(e) {
+    console.error(e);
+    showToast('送信できませんでした。電波の良い場所でもう一度お試しください','error');
+  }
 }
 
 // ===== HISTORY =====
@@ -1008,6 +1198,7 @@ function showHistoryDetail(orderId) {
       <div class="confirm-row"><span class="confirm-label">配送日</span><span class="confirm-value">${fmtDate(o.deliveryDate)}</span></div>
       <div class="confirm-row"><span class="confirm-label">配送区分</span><span class="confirm-badge">${o.type==='both'?'納品＋回収':'回収のみ'}</span></div>
       <div class="confirm-row"><span class="confirm-label">ステータス</span><span class="tag">${sl[o.status]||o.status}</span></div>
+      ${o.updatedAt?`<div class="confirm-row"><span class="confirm-label">変更日時</span><span class="confirm-value" style="font-size:13px;">${new Date(o.updatedAt).toLocaleString('ja-JP')}</span></div>`:''}
       <div class="confirm-row"><span class="confirm-label">合計金額（税別）</span><span class="confirm-value">${yen(o.totalAmount)}</span></div>
     </div></div>
     <div class="section-card"><div class="section-card-header">🧺 注文品目</div><div class="section-card-body">
@@ -1017,8 +1208,8 @@ function showHistoryDetail(orderId) {
 }
 function reuseOrder() {
   const o=appData.orders.find(x=>x.id===viewingOrderId); if(!o)return;
-  window._prevOrderItems=o.items||[];
   goToOrder();
+  window._prevOrderItems=o.items||[];
   copyPrevOrder();
 }
 
@@ -1136,12 +1327,13 @@ async function submitConsent() {
   if(!document.getElementById('consent-check').checked){ showToast('同意チェックを入れてください','error'); return; }
   const canvas=document.getElementById('sign-pad');
   const signImage=canvas.toDataURL('image/png');
-  appData.contracts=appData.contracts.filter(c=>c.facilityId!==currentUser.id);
-  appData.contracts.push({ facilityId:currentUser.id, facilityName:currentUser.name, agreed:true,
+  const consentObj={ facilityId:currentUser.id, facilityName:currentUser.name, agreed:true,
     agreedAt:new Date().toISOString(), signerName:signer, signImage,
-    contractVersion:CONTRACT_VERSION, agent:navigator.userAgent.slice(0,150) });
+    contractVersion:CONTRACT_VERSION, agent:navigator.userAgent.slice(0,150) };
+  appData.contracts=appData.contracts.filter(c=>c.facilityId!==currentUser.id);
+  appData.contracts.push(consentObj);
   showToast('保存中...','info');
-  await saveData();
+  await fsSet('contracts', currentUser.id, consentObj);
   showToast('署名・同意を記録しました。ありがとうございます');
   renderContractPage(); renderFacilityHome();
 }
@@ -1161,6 +1353,9 @@ function switchAdminTab(tab) {
   if(tab==='notes') renderNotesAdmin();
   if(tab==='invoices') renderInvoicesAdmin();
   if(tab==='contracts') renderContractsAdmin();
+  if(tab==='stock') renderStock();
+  if(tab==='supplier') renderSupplierTab();
+  if(tab==='keiei') renderKeiei();
 }
 
 // ===== DASHBOARD =====
@@ -1191,10 +1386,11 @@ function openAddNews(){ document.getElementById('news-title').value=''; document
 async function saveNews() {
   const title=document.getElementById('news-title').value.trim();
   if(!title){ showToast('タイトルを入力してください','error'); return; }
-  appData.news.push({ id:'news_'+Date.now(), date:new Date().toISOString(), title, body:document.getElementById('news-body').value.trim() });
-  await saveData(); closeModal('modal-news'); renderDashboard(); showToast('お知らせを配信しました');
+  const n = { id:'news_'+Date.now(), date:new Date().toISOString(), title, body:document.getElementById('news-body').value.trim() };
+  appData.news.push(n);
+  await fsSet('news', n.id, n); closeModal('modal-news'); renderDashboard(); showToast('お知らせを配信しました');
 }
-async function deleteNews(id){ if(!confirm('このお知らせを削除しますか？'))return; appData.news=appData.news.filter(n=>n.id!==id); await saveData(); renderDashboard(); showToast('削除しました'); }
+async function deleteNews(id){ if(!confirm('このお知らせを削除しますか？'))return; appData.news=appData.news.filter(n=>n.id!==id); await fsDelete('news', id); renderDashboard(); showToast('削除しました'); }
 
 // ===== FACILITIES =====
 function openAddFacility() {
@@ -1228,25 +1424,30 @@ async function saveFacility() {
     area:document.getElementById('fac-area').value.trim(),
     deliveryDay:document.getElementById('fac-day').value, routeOrder:parseInt(document.getElementById('fac-route').value)||99,
     systemFee:document.getElementById('fac-sysfee').value==='true', note:document.getElementById('fac-note').value.trim() };
+  showToast('保存中...','info');
   if(editingFacilityId){
     // IDが変更された場合、関連データも更新
     if(editingFacilityId !== fid) {
-      appData.orders.forEach(o=>{ if(o.facilityId===editingFacilityId){ o.facilityId=fid; } });
-      appData.deliveryNotes.forEach(n=>{ if(n.facilityId===editingFacilityId){ n.facilityId=fid; } });
-      appData.invoices.forEach(v=>{ if(v.facilityId===editingFacilityId){ v.facilityId=fid; } });
-      appData.contracts.forEach(c=>{ if(c.facilityId===editingFacilityId){ c.facilityId=fid; } });
+      if(appData.facilities.find(x=>x.id===fid)){ showToast('このIDは使用中です','error'); return; }
+      const ops=[];
+      appData.orders.forEach(o=>{ if(o.facilityId===editingFacilityId){ o.facilityId=fid; ops.push({type:'update',coll:'orders',id:o.id,data:{facilityId:fid}}); } });
+      appData.deliveryNotes.forEach(n=>{ if(n.facilityId===editingFacilityId){ n.facilityId=fid; ops.push({type:'update',coll:'deliveryNotes',id:n.id,data:{facilityId:fid}}); } });
+      appData.invoices.forEach(v=>{ if(v.facilityId===editingFacilityId){ v.facilityId=fid; ops.push({type:'update',coll:'invoices',id:v.id,data:{facilityId:fid}}); } });
+      appData.contracts.forEach(c=>{ if(c.facilityId===editingFacilityId){ c.facilityId=fid; ops.push({type:'set',coll:'contracts',id:fid,data:c}); ops.push({type:'delete',coll:'contracts',id:editingFacilityId}); } });
+      ops.push({type:'delete',coll:'facilities',id:editingFacilityId});
+      await commitOps(ops);
     }
     const i=appData.facilities.findIndex(x=>x.id===editingFacilityId); if(i>=0)appData.facilities[i]=obj;
   }
   else { if(appData.facilities.find(x=>x.id===fid)){ showToast('このIDは使用中です','error'); return; } appData.facilities.push(obj); }
-  showToast('保存中...','info'); await saveData();
+  await fsSet('facilities', fid, obj);
   renderFacilities(); closeModal('modal-facility'); showToast('保存しました');
 }
 async function deleteFacility(id) {
   const f=appData.facilities.find(x=>x.id===id); if(!f)return;
   if(!confirm(`「${f.name}」を削除しますか？`))return;
   appData.facilities=appData.facilities.filter(x=>x.id!==id);
-  await saveData(); renderFacilities(); showToast('削除しました');
+  await fsDelete('facilities', id); renderFacilities(); showToast('削除しました');
 }
 function renderFacilities(query='') {
   const c=document.getElementById('facilities-list'); if(!c)return;
@@ -1284,7 +1485,7 @@ function renderFacilities(query='') {
 function openAddItem() {
   editingItemId=null;
   document.getElementById('modal-item-title').textContent='品目追加';
-  ['item-name','item-size','item-sizeSpec','item-unitPrice','item-bundleQty','item-bundlePrice','item-sortOrder'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  ['item-name','item-size','item-sizeSpec','item-unitPrice','item-bundleQty','item-bundlePrice','item-sortOrder','item-cost','item-orderUnit','item-ycode','item-safety','item-safetyW'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('item-active').value='true';
   document.getElementById('modal-item').classList.add('open');
 }
@@ -1297,6 +1498,10 @@ function openEditItem(id) {
   document.getElementById('item-unitPrice').value=it.unitPrice||''; document.getElementById('item-bundleQty').value=it.bundleQty||'';
   document.getElementById('item-bundlePrice').value=it.bundlePrice||''; document.getElementById('item-sortOrder').value=it.sortOrder||'';
   document.getElementById('item-active').value=String(it.active!==false);
+  document.getElementById('item-cost').value=it.cost||''; document.getElementById('item-orderUnit').value=it.orderUnit||'';
+  document.getElementById('item-ycode').value=it.yamashitaCode||'';
+  document.getElementById('item-safety').value=(it.safetyStock??'')===''?'':it.safetyStock;
+  document.getElementById('item-safetyW').value=(it.safetyStockWinter??'')===''?'':it.safetyStockWinter;
   document.getElementById('modal-item').classList.add('open');
 }
 async function saveItem() {
@@ -1310,17 +1515,22 @@ async function saveItem() {
     unitPrice, bundleQty,
     bundlePrice:parseInt(document.getElementById('item-bundlePrice').value)||unitPrice*bundleQty,
     sortOrder:parseInt(document.getElementById('item-sortOrder').value)||99,
-    active:document.getElementById('item-active').value==='true' };
+    active:document.getElementById('item-active').value==='true',
+    cost:parseInt(document.getElementById('item-cost').value)||0,
+    orderUnit:parseInt(document.getElementById('item-orderUnit').value)||1,
+    yamashitaCode:document.getElementById('item-ycode').value.trim(),
+    safetyStock:parseInt(document.getElementById('item-safety').value)||0,
+    safetyStockWinter:parseInt(document.getElementById('item-safetyW').value)||0 };
   if(editingItemId){ const i=appData.items.findIndex(x=>x.id===editingItemId); if(i>=0)appData.items[i]=obj; }
   else appData.items.push(obj);
-  showToast('保存中...','info'); await saveData();
+  showToast('保存中...','info'); await fsSet('items', obj.id, obj);
   renderItems(); closeModal('modal-item'); showToast('保存しました');
 }
 async function deleteItem(id) {
   const it=appData.items.find(x=>x.id===id); if(!it)return;
   if(!confirm(`「${itemLabel(it)}」を削除しますか？`))return;
   appData.items=appData.items.filter(x=>x.id!==id);
-  await saveData(); renderItems(); showToast('削除しました');
+  await fsDelete('items', id); renderItems(); showToast('削除しました');
 }
 function renderItems() {
   const c=document.getElementById('items-list'); if(!c)return;
@@ -1328,7 +1538,7 @@ function renderItems() {
   c.innerHTML=[...appData.items].sort((a,b)=>a.sortOrder-b.sortOrder).map(it=>`
     <div class="item-card ${it.active?'':'item-inactive'}">
       <div style="flex:1"><div class="item-card-name">${itemLabel(it)} <span class="${it.active?'badge-active':'badge-inactive'}">${it.active?'有効':'無効'}</span></div>
-      <div class="item-card-meta">${it.sizeSpec?it.sizeSpec+'<br>':''}単価 ¥${it.unitPrice} ／ ${it.bundleQty}枚1束 ¥${it.bundlePrice.toLocaleString()} ／ 順${it.sortOrder}</div></div>
+      <div class="item-card-meta">${it.sizeSpec?it.sizeSpec+'<br>':''}単価 ¥${it.unitPrice} ／ ${it.bundleQty}枚1束 ¥${it.bundlePrice.toLocaleString()} ／ 順${it.sortOrder}${it.cost?`<br>仕入 ¥${it.cost} ／ 粗利 ¥${it.unitPrice-it.cost}（<strong>${Math.round((it.unitPrice-it.cost)/it.unitPrice*1000)/10}%</strong>）`:''}</div></div>
       <div style="display:flex;gap:6px;flex-shrink:0;"><button class="facility-edit-btn" onclick="openEditItem('${it.id}')">編集</button><button class="facility-del-btn" onclick="deleteItem('${it.id}')">削除</button></div>
     </div>`).join('');
 }
@@ -1338,7 +1548,7 @@ function clearOrderSearch(){ document.getElementById('order-search-facility').va
 function filterOrders(f,btn){ currentOrderFilter=f; document.querySelectorAll('#admin-orders .filter-btn').forEach(b=>b.classList.remove('active-filter')); btn.classList.add('active-filter'); renderOrders(); }
 async function updateOrderStatus(orderId,status) {
   const o=appData.orders.find(x=>x.id===orderId); if(!o)return;
-  o.status=status; await saveData(); renderOrders();
+  o.status=status; await fsUpdate('orders', orderId, { status }); renderOrders();
   showToast({new:'未対応',processing:'対応中',done:'完了'}[status]+'に変更しました');
 }
 function renderOrders() {
@@ -1359,7 +1569,7 @@ function renderOrders() {
       ?`<button class="order-action-btn" style="background:#d4edda;color:#155724;" onclick="updateOrderStatus('${o.id}','done')">完了へ</button><button class="order-action-btn" style="background:#fff3cd;color:#856404;" onclick="updateOrderStatus('${o.id}','new')">未対応に戻す</button>`
       :`<button class="order-action-btn" style="background:#f8f9fa;color:#6c757d;" onclick="updateOrderStatus('${o.id}','processing')">対応中に戻す</button>`;
     return `<div class="order-card">
-      <div class="order-card-header"><div class="order-facility">${o.facilityName}${o.late?' <span style="color:var(--danger);font-size:11px;">⚠締切後</span>':''}</div><span class="status-badge ${sc}">${sl}</span></div>
+      <div class="order-card-header"><div class="order-facility">${o.facilityName}${o.late?' <span style="color:var(--danger);font-size:11px;">⚠締切後</span>':''}${o.source==='phone'?' <span style="color:var(--primary);font-size:11px;">📞電話</span>':''}${o.updatedAt?' <span style="color:var(--gray-400);font-size:11px;">✏️変更あり</span>':''}</div><span class="status-badge ${sc}">${sl}</span></div>
       <div class="order-meta">${o.id}　配送: ${o.deliveryDate}　${o.type==='both'?'納品＋回収':'回収のみ'}　${yen(o.totalAmount)}</div>
       <div class="order-items-text">${(o.items||[]).map(i=>`${i.name}${i.size&&i.size!=='—'?' '+i.size:''}:${i.bundleCount}束`).join('　')||'（回収のみ）'}</div>
       ${o.memo?`<div class="order-memo">📝 ${o.memo}</div>`:''}
@@ -1399,46 +1609,118 @@ async function saveOrderEdit() {
   o.totalAmount=items.reduce((s,i)=>s+i.totalPrice,0);
   o.deliveryDate=document.getElementById('edit-delivery-date').value||o.deliveryDate;
   o.memo=document.getElementById('edit-memo').value.trim();
-  showToast('保存中...','info'); await saveData();
+  showToast('保存中...','info');
+  await fsUpdate('orders', o.id, { items:o.items, totalAmount:o.totalAmount, deliveryDate:o.deliveryDate, memo:o.memo });
   closeModal('modal-order'); renderOrders(); showToast('注文を修正しました');
 }
 async function deleteOrder(id) {
   if(!confirm('この注文を削除しますか？（元に戻せません）'))return;
   appData.orders=appData.orders.filter(x=>x.id!==id);
-  await saveData(); closeModal('modal-order'); renderOrders(); showToast('注文を削除しました');
+  await fsDelete('orders', id); closeModal('modal-order'); renderOrders(); showToast('注文を削除しました');
 }
 
-// ===== DELIVERY LIST =====
-function loadDelivery() {
+// ===== DELIVERY LIST（②③④：最小表示・電話・▲▼並び替え・済チェック） =====
+async function loadDelivery() {
   const date=document.getElementById('delivery-date').value;
   if(!date){ showToast('日付を選択してください','error'); return; }
   const list=appData.orders.filter(o=>o.deliveryDate===date);
-  document.getElementById('delivery-list-header').textContent=`${fmtDate(date)} 配送一覧　計${list.length}件`;
-  const body=document.getElementById('delivery-list-body');
-  if(!list.length){ body.innerHTML='<div class="empty-state"><span class="empty-state-icon">🚚</span><div class="empty-state-text">この日の配送はありません</div></div>'; return; }
+  // この日専用の並び順（配送担当者が▲▼で決めた順）を取得
+  let saved=[];
+  try {
+    const doc=await db.collection('settings').doc('deliveryOrder_'+date).get();
+    if(doc.exists) saved=doc.data().order||[];
+  } catch(e){ console.error(e); }
   const fo={}; appData.facilities.forEach(f=>{fo[f.id]=f.routeOrder||99;});
-  list.sort((a,b)=>(fo[a.facilityId]||99)-(fo[b.facilityId]||99));
-  body.innerHTML=list.map((o,i)=>`
-    <div class="delivery-list-row">
-      <div class="delivery-order-num">${i+1}</div>
-      <div style="flex:1"><div class="delivery-facility-name">${o.facilityName}${o.type==='return'?'<span class="return-only-badge">回収のみ</span>':''}</div>
-      <div class="delivery-type">${(o.items||[]).map(x=>`${x.name}${x.size&&x.size!=='—'?' '+x.size:''}:${x.bundleCount}束`).join('　')||'—'}</div></div>
-    </div>`).join('');
-  window._deliveryPrintData={date,list};
+  list.sort((a,b)=>{
+    const ia=saved.indexOf(a.id), ib=saved.indexOf(b.id);
+    if(ia>=0&&ib>=0) return ia-ib;
+    if(ia>=0) return -1;
+    if(ib>=0) return 1;
+    return (fo[a.facilityId]||99)-(fo[b.facilityId]||99);
+  });
+  window._deliveryState={date,list,saved};
+  renderDeliveryList();
+}
+function renderDeliveryList() {
+  const st=window._deliveryState; if(!st)return;
+  const done=st.list.filter(o=>o.delivered).length;
+  document.getElementById('delivery-list-header').textContent=
+    `${fmtDate(st.date)} 配送一覧　計${st.list.length}件${st.list.length?`（済 ${done}/${st.list.length}）`:''}`;
+  const body=document.getElementById('delivery-list-body');
+  if(!st.list.length){ body.innerHTML='<div class="empty-state"><span class="empty-state-icon">🚚</span><div class="empty-state-text">この日の配送はありません</div></div>'; return; }
+  body.innerHTML=st.list.map((o,i)=>{
+    const f=appData.facilities.find(x=>x.id===o.facilityId)||{};
+    const isNew=st.saved.length>0&&!st.saved.includes(o.id);
+    return `<div class="dlv-row ${o.delivered?'done':''}">
+      <div class="dlv-top">
+        <div class="delivery-order-num">${i+1}</div>
+        <div class="dlv-name">${o.facilityName}${o.type==='return'?'<span class="return-only-badge">回収のみ</span>':''}${isNew?'<span class="new-order-badge">新着</span>':''}</div>
+        <button class="dlv-done-btn ${o.delivered?'done':''}" onclick="toggleDelivered('${o.id}')">${o.delivered?'✓ 済':'済にする'}</button>
+      </div>
+      <div class="dlv-bottom">
+        <div class="dlv-items">${(o.items||[]).map(x=>`${x.name}${x.size&&x.size!=='—'?' '+x.size:''}:${x.bundleCount}束`).join('　')||'（回収のみ）'}</div>
+        ${f.tel?`<a class="dlv-tel" href="tel:${f.tel.replace(/-/g,'')}">📞</a>`:''}
+        <div class="dlv-move">
+          <button onclick="moveDelivery(${i},-1)" ${i===0?'disabled':''}>▲</button>
+          <button onclick="moveDelivery(${i},1)" ${i===st.list.length-1?'disabled':''}>▼</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+function moveDelivery(i,dir){
+  const st=window._deliveryState; if(!st)return;
+  const j=i+dir; if(j<0||j>=st.list.length)return;
+  [st.list[i],st.list[j]]=[st.list[j],st.list[i]];
+  st.saved=st.list.map(o=>o.id);
+  renderDeliveryList();
+  // 並び順を即保存（この日付専用。他の日やルート順マスタには影響しない）
+  db.collection('settings').doc('deliveryOrder_'+st.date).set({order:st.saved})
+    .catch(e=>{ console.error(e); showToast('並び順の保存に失敗: '+e.message,'error'); });
+}
+async function toggleDelivered(orderId){
+  const o=appData.orders.find(x=>x.id===orderId); if(!o)return;
+  const stockLines=(o.items||[]).map(i=>({itemId:i.itemId, qty:i.totalQty}));
+  if(o.delivered){
+    if(!confirm(`「${o.facilityName}」の済を取り消しますか？\n（発行済みの納品書は残ります。納品書タブから削除できます）`))return;
+    o.delivered=false; o.deliveredAt=null;
+    db.collection('orders').doc(o.id).set({delivered:false,deliveredAt:null},{merge:true})
+      .catch(e=>showToast('保存失敗: '+e.message,'error'));
+    if(stockLines.length){ applyStockDelta(stockLines,1); addStockLog('cancel', o.id, stockLines, '済取消：'+o.facilityName); }
+    renderDeliveryList(); showToast('済を取り消しました（在庫を戻しました）');
+    return;
+  }
+  o.delivered=true; o.deliveredAt=new Date().toISOString();
+  db.collection('orders').doc(o.id).set({delivered:true,deliveredAt:o.deliveredAt},{merge:true})
+    .catch(e=>showToast('保存失敗: '+e.message,'error'));
+  if(stockLines.length){ applyStockDelta(stockLines,-1); addStockLog('out', o.id, stockLines, o.facilityName+'へ配送'); }
+  // ④納品書を自動発行（品目がある注文のみ。納品書番号=N-注文番号なので二重発行されない）
+  let issued=false;
+  if((o.items||[]).length>0 && !appData.deliveryNotes.find(n=>n.orderId===o.id)){
+    const n=makeNote(o);
+    appData.deliveryNotes.push(n);
+    db.collection('deliveryNotes').doc(n.id).set(n)
+      .catch(e=>showToast('納品書の保存に失敗: '+e.message,'error'));
+    issued=true;
+  }
+  renderDeliveryList();
+  showToast(navigator.onLine
+    ? (issued?'済にしました（納品書を発行）':'済にしました')
+    : '済にしました（オフライン：電波復帰時に自動送信されます）');
 }
 function printDeliveryList() {
-  const d=window._deliveryPrintData;
-  if(!d){ showToast('先に配送一覧を表示してください','error'); return; }
-  const rows=d.list.map((o,i)=>{
+  const st=window._deliveryState;
+  if(!st){ showToast('先に配送一覧を表示してください','error'); return; }
+  const rows=st.list.map((o,i)=>{
     const f=appData.facilities.find(x=>x.id===o.facilityId)||{};
     return `<tr><td style="text-align:center;font-weight:700;">${i+1}</td>
-      <td><strong>${o.facilityName}</strong>${o.type==='return'?'（回収のみ）':''}<br><span style="font-size:9pt;">${f.address||''}　${f.tel||''}</span></td>
+      <td><strong>${o.facilityName}</strong>${o.type==='return'?'（回収のみ）':''}<br><span style="font-size:9pt;">${f.tel||''}</span></td>
       <td>${(o.items||[]).map(x=>`${x.name}${x.size&&x.size!=='—'?' '+x.size:''} ${x.bundleCount}束(${x.totalQty}枚)`).join('<br>')||'—'}</td>
-      <td style="width:18mm;"></td></tr>`;
+      <td style="width:18mm;text-align:center;font-size:13pt;">${o.delivered?'✓':''}</td></tr>`;
   }).join('');
   openPrint(`<div class="print-doc-title">配 送 一 覧</div>
-    <div class="print-meta">配送日：${fmtDate(d.date)}　　計 ${d.list.length} 件</div>
-    <table class="print-table"><tr><th style="width:10mm;">順</th><th>施設</th><th>納品内容</th><th>確認</th></tr>${rows}</table>`);
+    <div class="print-meta">配送日：${fmtDate(st.date)}　　計 ${st.list.length} 件</div>
+    <table class="print-table"><tr><th style="width:10mm;">順</th><th>施設</th><th>納品内容</th><th>済</th></tr>${rows}</table>`);
 }
 
 // ===== SUMMARY =====
@@ -1476,29 +1758,51 @@ function renderNotesAdmin() {
     <div class="doc-actions"><button class="doc-btn" onclick="issueNote('${o.id}')">📄 発行</button></div></div>`).join('')
     + `<div class="mt-16"><button class="btn btn-primary btn-sm" onclick="issueAllNotes()">✓ この日の納品書を一括発行（${candidates.length}件）</button></div>`
     : '<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:14px;">この日の未発行注文はありません</div>';
-  const notes=[...appData.deliveryNotes].sort((a,b)=>b.id.localeCompare(a.id)).slice(0,50);
+  const notes=[...appData.deliveryNotes].sort((a,b)=>b.date.localeCompare(a.date)||b.id.localeCompare(a.id)).slice(0,50);
   document.getElementById('notes-issued-list').innerHTML = notes.length ? notes.map(n=>`
     <div class="doc-item"><div class="doc-info"><div class="doc-title">${n.facilityName}　${fmtDate(n.date)}</div><div class="doc-meta">${n.id}　${yen(n.total)}（税別）</div></div>
-    <div class="doc-actions"><button class="doc-btn" onclick="printDeliveryNote('${n.id}')">📄 表示/印刷</button></div></div>`).join('')
+    <div class="doc-actions" style="flex-direction:column;align-items:stretch;">
+      <button class="doc-btn" onclick="printDeliveryNote('${n.id}')">📄 表示/印刷</button>
+      <input type="date" value="${n.date}" onchange="changeNoteDate('${n.id}',this.value)" title="納品書の日付を変更" style="padding:7px;border:2px solid var(--gray-200);border-radius:8px;font-size:12px;font-family:var(--font);">
+      <button class="facility-del-btn" onclick="deleteNote('${n.id}')">削除</button>
+    </div></div>`).join('')
     : '<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:14px;">発行済み納品書はありません</div>';
 }
+// 納品書番号＝「N-注文番号」。1注文につき1枚に固定されるため、
+// 済チェックの連打や2端末同時操作でも二重発行が構造的に起きない
 function makeNote(o) {
-  const seq=appData.deliveryNotes.filter(n=>n.date===o.deliveryDate).length+1;
-  return { id:`N-${o.deliveryDate.replace(/-/g,'')}-${String(seq).padStart(3,'0')}`,
+  return { id:'N-'+o.id,
     orderId:o.id, facilityId:o.facilityId, facilityName:o.facilityName,
     date:o.deliveryDate, items:o.items, total:o.totalAmount, createdAt:new Date().toISOString() };
 }
 async function issueNote(orderId) {
   const o=appData.orders.find(x=>x.id===orderId); if(!o)return;
-  appData.deliveryNotes.push(makeNote(o));
-  await saveData(); renderNotesAdmin(); showToast('納品書を発行しました');
+  const n=makeNote(o);
+  appData.deliveryNotes.push(n);
+  await fsSet('deliveryNotes', n.id, n); renderNotesAdmin(); showToast('納品書を発行しました');
 }
 async function issueAllNotes() {
   const date=document.getElementById('notes-date').value;
   const issued=new Set(appData.deliveryNotes.map(n=>n.orderId));
   const candidates=appData.orders.filter(o=>o.deliveryDate===date&&!issued.has(o.id)&&(o.items||[]).length>0);
-  candidates.forEach(o=>appData.deliveryNotes.push(makeNote(o)));
-  await saveData(); renderNotesAdmin(); showToast(candidates.length+'件の納品書を発行しました');
+  if(!candidates.length){ showToast('未発行の注文がありません','info'); return; }
+  const ops=[];
+  candidates.forEach(o=>{ const n=makeNote(o); appData.deliveryNotes.push(n); ops.push({coll:'deliveryNotes',id:n.id,data:n}); });
+  await commitOps(ops); renderNotesAdmin(); showToast(candidates.length+'件の納品書を発行しました');
+}
+// ⑤納品書の日付変更（番号は変わらない。施設側の月別表示に反映される）
+async function changeNoteDate(noteId, val) {
+  const n=appData.deliveryNotes.find(x=>x.id===noteId); if(!n||!val)return;
+  if(!confirm(`納品書の日付を ${fmtDate(val)} に変更しますか？\n（納品書番号は変わりません。施設側の月別表示に反映されます）`)){ renderNotesAdmin(); return; }
+  n.date=val;
+  await fsUpdate('deliveryNotes', noteId, { date: val });
+  renderNotesAdmin(); showToast('納品書の日付を変更しました');
+}
+async function deleteNote(noteId) {
+  if(!confirm('この納品書を削除しますか？'))return;
+  appData.deliveryNotes=appData.deliveryNotes.filter(x=>x.id!==noteId);
+  await fsDelete('deliveryNotes', noteId);
+  renderNotesAdmin(); showToast('納品書を削除しました');
 }
 function printDeliveryNote(noteId) {
   const n=appData.deliveryNotes.find(x=>x.id===noteId); if(!n)return;
@@ -1516,6 +1820,70 @@ function printDeliveryNote(noteId) {
     <div style="font-size:9.5pt;margin-top:4mm;">※金額は税別表示です。消費税は月次の請求書にて精算いたします。</div>`);
 }
 
+// ===== ⑥電話注文（管理者の代理入力・締切チェックなし） =====
+function openPhoneOrder() {
+  const sel=document.getElementById('phone-facility');
+  sel.innerHTML='<option value="">— 施設を選択 —</option>'+[...appData.facilities]
+    .sort((a,b)=>(a.routeOrder||99)-(b.routeOrder||99))
+    .map(f=>`<option value="${f.id}">${f.name}</option>`).join('');
+  document.getElementById('phone-date').value='';
+  document.getElementById('phone-type').value='both';
+  document.getElementById('phone-memo').value='';
+  renderPhoneItems({});
+  document.getElementById('modal-phone').classList.add('open');
+}
+function phoneFacilityChanged() {
+  const f=appData.facilities.find(x=>x.id===document.getElementById('phone-facility').value);
+  if(f) document.getElementById('phone-date').value=nextDeliveryInfo(f).iso;
+}
+function renderPhoneItems(bundles) {
+  document.getElementById('phone-items').innerHTML=appData.items.filter(i=>i.active).sort((a,b)=>a.sortOrder-b.sortOrder).map(item=>`
+    <div class="confirm-row"><span class="confirm-label">${itemLabel(item)}<br><span style="font-size:11px;">1束${item.bundleQty}枚 ${yen(item.bundlePrice)}</span></span>
+    <input type="number" min="0" value="${bundles[item.id]||0}" id="phone-bundle-${item.id}" style="width:80px;padding:9px;border:2px solid var(--gray-300);border-radius:8px;font-size:17px;font-weight:700;text-align:center;font-family:var(--font);"></div>`).join('');
+}
+function copyPhonePrev() {
+  const fid=document.getElementById('phone-facility').value;
+  if(!fid){ showToast('先に施設を選択してください','error'); return; }
+  const prev=appData.orders.filter(o=>o.facilityId===fid&&(o.items||[]).length>0)
+    .sort((a,b)=>b.createdAt.localeCompare(a.createdAt))[0];
+  if(!prev){ showToast('この施設の過去注文がありません','info'); return; }
+  const bundles={};
+  prev.items.forEach(pi=>{ if(appData.items.find(i=>i.id===pi.itemId)) bundles[pi.itemId]=pi.bundleCount; });
+  renderPhoneItems(bundles);
+  showToast('前回の注文内容をコピーしました');
+}
+async function submitPhoneOrder() {
+  const fid=document.getElementById('phone-facility').value;
+  const f=appData.facilities.find(x=>x.id===fid);
+  const date=document.getElementById('phone-date').value;
+  if(!f){ showToast('施設を選択してください','error'); return; }
+  if(!date){ showToast('配送日を入力してください','error'); return; }
+  const type=document.getElementById('phone-type').value;
+  const items=appData.items.filter(i=>i.active).map(item=>{
+    const el=document.getElementById('phone-bundle-'+item.id);
+    const bc=Math.max(0,parseInt(el&&el.value)||0);
+    return bc>0?{ itemId:item.id,name:item.name,size:item.size,bundleCount:bc,bundleQty:item.bundleQty,
+      totalQty:bc*item.bundleQty,unitPrice:item.unitPrice,bundlePrice:item.bundlePrice,totalPrice:bc*item.bundlePrice }:null;
+  }).filter(Boolean);
+  if(!items.length&&type==='both'){ showToast('束数を入力してください','error'); return; }
+  const dup=appData.orders.find(o=>o.facilityId===fid&&o.deliveryDate===date);
+  if(dup&&!confirm(`「${f.name}」は ${fmtDate(date)} の注文が既にあります（${dup.id}）。\n別の注文として追加しますか？`))return;
+  showToast('登録中...','info');
+  try {
+    const now=new Date();
+    const dateStr=toLocalISO(now).replace(/-/g,'');
+    const seq=await nextSeq('orders_'+dateStr);
+    const orderId=`${dateStr}-${String(seq).padStart(3,'0')}`;
+    const order={ id:orderId, facilityId:fid, facilityName:f.name, deliveryDate:date, type, items,
+      totalAmount:items.reduce((s,i)=>s+i.totalPrice,0), status:'new', late:false, source:'phone',
+      memo:document.getElementById('phone-memo').value.trim(), createdAt:now.toISOString() };
+    await db.collection('orders').doc(orderId).set(order);
+    appData.orders.push(order);
+    closeModal('modal-phone'); renderOrders();
+    showToast(`電話注文を登録しました（${orderId}）`);
+  } catch(e){ console.error(e); showToast('登録失敗: '+e.message,'error'); }
+}
+
 // ===== INVOICES (admin) =====
 async function generateInvoices() {
   const month=document.getElementById('invoice-month').value;
@@ -1523,37 +1891,40 @@ async function generateInvoices() {
   const [y,m]=month.split('-').map(Number);
   const nextM=new Date(y,m,10); // 翌月10日
   const dueDate=`${nextM.getFullYear()}-${String(nextM.getMonth()+1).padStart(2,'0')}-10`;
-  let created=0;
+  const targets=[];
   appData.facilities.forEach(f=>{
     if(appData.invoices.find(v=>v.facilityId===f.id&&v.month===month)) return; // 既存はスキップ
     const orders=appData.orders.filter(o=>o.facilityId===f.id&&o.deliveryDate.startsWith(month));
+    if(orders.length===0) return; // 発注ゼロの月は請求書を作成しない（第7条：システム利用料もなし）
     const linenTotal=orders.reduce((s,o)=>s+(o.totalAmount||0),0);
-    // 第7条：当月に一度も発注がない場合はシステム利用料なし
-    const sysFee=(f.systemFee!==false && orders.length>0)?SYSTEM_FEE:0;
-    if(orders.length===0) return; // 発注ゼロの月は請求書を作成しない
+    const sysFee=(f.systemFee!==false)?SYSTEM_FEE:0;
     const subtotal=linenTotal+sysFee;
     const tax=Math.floor(subtotal*TAX_RATE);
-    const seq=appData.invoices.filter(v=>v.month===month).length+1;
-    appData.invoices.push({ id:`I-${month.replace('-','')}-${String(seq).padStart(3,'0')}`,
-      facilityId:f.id, facilityName:f.name, month, linenTotal, systemFee:sysFee, tax,
+    targets.push({ facilityId:f.id, facilityName:f.name, month, linenTotal, systemFee:sysFee, tax,
       total:subtotal+tax, dueDate, status:'unpaid', orderCount:orders.length, createdAt:new Date().toISOString() });
-    created++;
   });
-  if(created===0){ showToast('新規作成対象がありません（発行済みか注文なし）','info'); renderInvoicesAdmin(); return; }
-  showToast('保存中...','info'); await saveData();
-  renderInvoicesAdmin(); showToast(created+'件の請求書を作成しました');
+  if(targets.length===0){ showToast('新規作成対象がありません（発行済みか注文なし）','info'); renderInvoicesAdmin(); return; }
+  showToast('保存中...','info');
+  const start=await nextSeq('invoices_'+month.replace('-',''), targets.length);
+  const ops=[];
+  targets.forEach((t,idx)=>{
+    const inv=Object.assign({ id:`I-${month.replace('-','')}-${String(start+idx).padStart(3,'0')}` }, t);
+    appData.invoices.push(inv); ops.push({coll:'invoices',id:inv.id,data:inv});
+  });
+  await commitOps(ops);
+  renderInvoicesAdmin(); showToast(targets.length+'件の請求書を作成しました');
 }
 async function toggleInvoicePaid(id) {
   const v=appData.invoices.find(x=>x.id===id); if(!v)return;
   v.status = v.status==='paid'?'unpaid':'paid';
   v.paidAt = v.status==='paid'?new Date().toISOString():null;
-  await saveData(); renderInvoicesAdmin();
+  await fsUpdate('invoices', id, { status:v.status, paidAt:v.paidAt }); renderInvoicesAdmin();
   showToast(v.status==='paid'?'支払済みにしました':'未払いに戻しました');
 }
 async function deleteInvoice(id) {
   if(!confirm('この請求書を削除しますか？'))return;
   appData.invoices=appData.invoices.filter(x=>x.id!==id);
-  await saveData(); renderInvoicesAdmin(); showToast('削除しました');
+  await fsDelete('invoices', id); renderInvoicesAdmin(); showToast('削除しました');
 }
 function renderInvoicesAdmin() {
   const mEl=document.getElementById('invoice-month');
@@ -1608,7 +1979,7 @@ async function resetContract(facilityId) {
   const f=appData.facilities.find(x=>x.id===facilityId)||{};
   if(!confirm(`「${f.name}」の契約同意をリセットして未同意に戻しますか？\n（施設マイページに再度、同意のお願いが表示されます）`)) return;
   appData.contracts=appData.contracts.filter(c=>c.facilityId!==facilityId);
-  showToast('保存中...','info'); await saveData();
+  showToast('保存中...','info'); await fsDelete('contracts', facilityId);
   renderContractsAdmin(); renderDashboard();
   showToast('契約同意をリセットしました');
 }
@@ -1685,7 +2056,7 @@ async function saveSchedule() {
     if(!d1&&!dl1&&!d2&&!dl2){ delete appData.schedule[area]; }
     else appData.schedule[area]={ nextDeliveryDate:d1||'', orderDeadline:dl1||'', nextDeliveryDate2:d2||'', orderDeadline2:dl2||'' };
   });
-  showToast('保存中...','info'); await saveData();
+  showToast('保存中...','info'); await fsSet('settings', 'schedule', appData.schedule);
   showToast('配送日設定を保存しました');
 }
 
@@ -1702,10 +2073,333 @@ function initDrag() {
   list.addEventListener('dragover',e=>{e.preventDefault();const over=e.target.closest('.drag-item');if(over&&over!==dragEl){const r=over.getBoundingClientRect();e.clientY<r.top+r.height/2?list.insertBefore(dragEl,over):over.nextSibling?list.insertBefore(dragEl,over.nextSibling):list.appendChild(dragEl);}});
 }
 async function saveDragOrder() {
-  document.querySelectorAll('.drag-item').forEach((el,i)=>{const f=appData.facilities.find(x=>x.id===el.dataset.id);if(f)f.routeOrder=i+1;});
-  await saveData(); showToast('配送順を保存しました');
+  const ops=[];
+  document.querySelectorAll('.drag-item').forEach((el,i)=>{
+    const f=appData.facilities.find(x=>x.id===el.dataset.id);
+    if(f){ f.routeOrder=i+1; ops.push({type:'update',coll:'facilities',id:f.id,data:{routeOrder:i+1}}); }
+  });
+  await commitOps(ops); showToast('配送順を保存しました');
 }
 
+
+// ===== 在庫管理 =====
+// 在庫の増減は settings/stock の qty.品目ID を increment で更新する。
+// フィールド単位のアトミック加算なので、配送者と管理者が同時に操作しても消えない
+function applyStockDelta(lines, sign) {
+  const patch={};
+  lines.forEach(l=>{
+    patch['qty.'+l.itemId]=firebase.firestore.FieldValue.increment(sign*l.qty);
+    appData.stock[l.itemId]=(appData.stock[l.itemId]||0)+sign*l.qty;
+  });
+  db.collection('settings').doc('stock').update(patch)
+    .catch(e=>{ console.error(e); showToast('在庫の更新に失敗: '+e.message,'error'); });
+}
+function addStockLog(type, refId, lines, note) {
+  const log={ id:'L'+Date.now()+'-'+Math.floor(Math.random()*1000), type, refId:refId||'', note:note||'',
+    lines, createdAt:new Date().toISOString() };
+  appData.stockLogs.unshift(log);
+  db.collection('stockLogs').doc(log.id).set(log).catch(e=>console.error(e));
+}
+function itemSafety(it){ return appData.winterMode ? (it.safetyStockWinter||0) : (it.safetyStock||0); }
+function renderStock() {
+  document.getElementById('stock-season').textContent = appData.winterMode?'（❄️ 冬季の安全在庫で判定中）':'（☀️ 通常の安全在庫で判定中）';
+  document.getElementById('winter-toggle').textContent = appData.winterMode?'☀️ 通常在庫に切替':'❄️ 冬季在庫に切替';
+  const items=appData.items.filter(i=>i.active).sort((a,b)=>a.sortOrder-b.sortOrder);
+  document.getElementById('stock-list').innerHTML=items.map(it=>{
+    const qty=appData.stock[it.id]||0;
+    const safety=itemSafety(it);
+    const short=safety-qty;
+    return `<div class="doc-item">
+      <div class="doc-info"><div class="doc-title">${itemLabel(it)} ${short>0?`<span class="badge-unpaid">⚠️ ${short}枚不足</span>`:qty<0?'<span class="badge-unpaid">マイナス在庫</span>':'<span class="badge-paid">OK</span>'}</div>
+      <div class="doc-meta">現在庫 <strong style="font-size:16px;color:var(--primary);">${qty}</strong> 枚 ／ 安全在庫 ${safety}枚</div></div>
+      <input type="number" id="stocktake-${it.id}" placeholder="実数" min="0" style="width:80px;padding:9px;border:2px solid var(--gray-300);border-radius:8px;font-size:16px;font-weight:700;text-align:center;font-family:var(--font);flex-shrink:0;">
+    </div>`;
+  }).join('');
+  const typeLabel={out:'📤 出庫',in:'📥 入庫',cancel:'↩️ 済取消',adjust:'📋 棚卸'};
+  document.getElementById('stock-logs').innerHTML=appData.stockLogs.slice(0,30).map(l=>{
+    const items=(l.lines||[]).map(x=>{const it=appData.items.find(i=>i.id===x.itemId); return `${it?itemLabel(it):x.itemId}:${x.qty}`;}).join('　');
+    return `<div class="doc-item"><div class="doc-info"><div class="doc-title" style="font-size:13.5px;">${typeLabel[l.type]||l.type}　<span style="font-weight:400;color:var(--gray-600);">${l.note||''}</span></div>
+      <div class="doc-meta">${new Date(l.createdAt).toLocaleString('ja-JP')}<br>${items}</div></div></div>`;
+  }).join('')||'<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:14px;">履歴はまだありません</div>';
+}
+async function toggleWinter() {
+  appData.winterMode=!appData.winterMode;
+  await fsUpdate('settings','stock',{winter:appData.winterMode});
+  renderStock();
+  showToast(appData.winterMode?'冬季の安全在庫に切り替えました':'通常の安全在庫に切り替えました');
+}
+async function saveStocktake() {
+  const items=appData.items.filter(i=>i.active);
+  const patch={}; const lines=[];
+  items.forEach(it=>{
+    const el=document.getElementById('stocktake-'+it.id);
+    if(!el||el.value==='')return;
+    const v=Math.max(0,parseInt(el.value)||0);
+    patch['qty.'+it.id]=v;
+    lines.push({itemId:it.id, qty:v});
+    appData.stock[it.id]=v;
+  });
+  if(!lines.length){ showToast('実数を入力した品目がありません','error'); return; }
+  showToast('保存中...','info');
+  try {
+    await db.collection('settings').doc('stock').update(patch);
+    addStockLog('adjust','',lines,'棚卸（実数で上書き）');
+    renderStock();
+    showToast(lines.length+'品目の棚卸を保存しました');
+  } catch(e){ console.error(e); showToast('保存失敗: '+e.message,'error'); }
+}
+
+// ===== ヤマシタ発注書 =====
+// 発注式（在庫表Excelのルールを踏襲）：発注数＝max(0,安全在庫−現在庫)＋施設注文分 を発注単位で切り上げ
+function bizDaysBefore(dateIso, n) {
+  const d=new Date(dateIso+'T00:00:00'); let c=0;
+  while(c<n){ d.setDate(d.getDate()-1); const w=d.getDay(); if(w!==0&&w!==6)c++; }
+  return d;
+}
+function renderSupplierTab() {
+  const fEl=document.getElementById('sup-facility-date');
+  if(!fEl.value && appData.facilities.length){ fEl.value=nextDeliveryInfo(appData.facilities[0]).iso; }
+  renderSupplierHistory();
+}
+function calcSupplierOrder() {
+  const ddate=document.getElementById('sup-delivery-date').value;
+  const fdate=document.getElementById('sup-facility-date').value;
+  if(!ddate){ showToast('ヤマシタ納品日を選択してください','error'); return; }
+  const dl=bizDaysBefore(ddate,2);
+  document.getElementById('sup-deadline').textContent=`⏰ 発注締切：${dl.getMonth()+1}月${dl.getDate()}日（${dayNames[dl.getDay()]}）午前中まで（納品日の前々営業日）`;
+  const demand={};
+  if(fdate) appData.orders.filter(o=>o.deliveryDate===fdate).forEach(o=>(o.items||[]).forEach(i=>{demand[i.itemId]=(demand[i.itemId]||0)+i.totalQty;}));
+  const items=appData.items.filter(i=>i.active).sort((a,b)=>(a.yamashitaCode||'zz').localeCompare(b.yamashitaCode||'zz'));
+  window._supCalc={ ddate, fdate, rows: items.map(it=>{
+    const stock=appData.stock[it.id]||0;
+    const safety=itemSafety(it);
+    const shortage=Math.max(0,safety-stock);
+    const dem=demand[it.id]||0;
+    const unit=it.orderUnit||1;
+    const qty=Math.ceil((shortage+dem)/unit)*unit;
+    return { itemId:it.id, name:itemLabel(it), ycode:it.yamashitaCode||'—', cost:it.cost||0, stock, safety, shortage, demand:dem, unit, qty };
+  })};
+  renderSupCalc();
+}
+function renderSupCalc() {
+  const sc=window._supCalc; if(!sc)return;
+  const estCost=sc.rows.reduce((s,r)=>s+r.qty*r.cost,0);
+  document.getElementById('sup-calc').innerHTML=`
+    <div class="section-card"><div class="section-card-header">🧮 発注数の計算（納品日：${fmtDate(sc.ddate)}${sc.fdate?'／施設配送日：'+fmtDate(sc.fdate):''}）</div>
+    <div class="section-card-body">
+      ${sc.rows.map((r,i)=>`
+        <div class="confirm-row"><span class="confirm-label">${r.name}<br><span style="font-size:11px;">在庫${r.stock} → 不足${r.shortage} ＋ 注文${r.demand}（${r.unit}枚単位）</span></span>
+        <input type="number" min="0" step="${r.unit}" value="${r.qty}" id="sup-qty-${i}" style="width:80px;padding:9px;border:2px solid var(--gray-300);border-radius:8px;font-size:17px;font-weight:700;text-align:center;font-family:var(--font);"></div>`).join('')}
+      <div class="confirm-row"><span class="confirm-label" style="font-weight:700;">概算仕入額（税別）</span><span class="confirm-value">${yen(estCost)}</span></div>
+      <button class="btn btn-primary mt-16" onclick="confirmSupplierOrder()">✓ この内容で発注を確定する</button>
+    </div></div>`;
+}
+async function confirmSupplierOrder() {
+  const sc=window._supCalc; if(!sc)return;
+  const lines=[];
+  sc.rows.forEach((r,i)=>{
+    const el=document.getElementById('sup-qty-'+i);
+    const q=Math.max(0,parseInt(el&&el.value)||0);
+    if(q>0) lines.push({ itemId:r.itemId, name:r.name, ycode:r.ycode, qty:q, cost:r.cost });
+  });
+  if(!lines.length){ showToast('発注数がすべて0です','error'); return; }
+  showToast('保存中...','info');
+  const so={ id:'Y-'+sc.ddate.replace(/-/g,'')+'-'+String(Date.now()).slice(-4),
+    deliveryDate:sc.ddate, facilityDate:sc.fdate||'', lines,
+    estCost:lines.reduce((s,l)=>s+l.qty*(l.cost||0),0),
+    status:'ordered', createdAt:new Date().toISOString() };
+  await fsSet('supplierOrders', so.id, so);
+  appData.supplierOrders.unshift(so);
+  window._supCalc=null;
+  document.getElementById('sup-calc').innerHTML='';
+  renderSupplierHistory();
+  showSupOrder(so.id);
+  showToast('発注を確定しました。転記表からExcelへ入力してください');
+}
+function renderSupplierHistory() {
+  const list=[...appData.supplierOrders].sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).slice(0,15);
+  document.getElementById('sup-history').innerHTML=list.length?list.map(so=>{
+    const total=so.lines.reduce((s,l)=>s+l.qty,0);
+    return `<div class="doc-item"><div class="doc-info">
+      <div class="doc-title">納品日 ${fmtDate(so.deliveryDate)} <span class="${so.status==='received'?'badge-paid':'badge-unpaid'}">${so.status==='received'?'入庫済':'発注済'}</span></div>
+      <div class="doc-meta">${so.id}　計${total}枚　概算${yen(so.estCost||0)}（税別）</div></div>
+      <div class="doc-actions" style="flex-direction:column;align-items:stretch;">
+        <button class="doc-btn" onclick="showSupOrder('${so.id}')">📋 転記表</button>
+        ${so.status!=='received'?`<button class="doc-btn" style="background:#e8f7ee;border-color:#a3d9b8;color:#155724;" onclick="receiveSupplierOrder('${so.id}')">📥 入庫する</button>`:''}
+      </div></div>`;
+  }).join(''):'<div style="font-size:13px;color:var(--gray-400);text-align:center;padding:14px;">発注履歴はまだありません</div>';
+}
+function showSupOrder(id) {
+  const so=appData.supplierOrders.find(x=>x.id===id); if(!so)return;
+  const dl=bizDaysBefore(so.deliveryDate,2);
+  document.getElementById('sup-calc').innerHTML=`
+    <div class="section-card"><div class="section-card-header">📋 Excel転記表（指定Excelと同じ並び順）<button class="modal-close" onclick="document.getElementById('sup-calc').innerHTML=''">×</button></div>
+    <div class="section-card-body">
+      <div style="font-size:13px;color:var(--gray-600);margin-bottom:10px;">納品日：<strong>${fmtDate(so.deliveryDate)}</strong>（Excelの納品日欄に入力）／ 送付締切：${dl.getMonth()+1}月${dl.getDate()}日（${dayNames[dl.getDay()]}）午前中<br>送付先：ヤマシタ静岡事業所 021701_12@yco.co.jp</div>
+      <table style="width:100%;border-collapse:collapse;font-size:14px;">
+        <tr style="background:var(--gray-100);"><th style="padding:8px;text-align:left;border:1px solid var(--gray-200);">商品コード</th><th style="padding:8px;text-align:left;border:1px solid var(--gray-200);">商品名</th><th style="padding:8px;text-align:right;border:1px solid var(--gray-200);">オーダー数</th></tr>
+        ${so.lines.map(l=>`<tr><td style="padding:8px;border:1px solid var(--gray-200);font-family:monospace;">${l.ycode}</td><td style="padding:8px;border:1px solid var(--gray-200);">${l.name}</td><td style="padding:8px;border:1px solid var(--gray-200);text-align:right;font-size:18px;font-weight:800;color:var(--primary);">${l.qty}</td></tr>`).join('')}
+      </table>
+      <div class="mt-16"><button class="btn btn-secondary btn-sm" onclick="printSupOrder('${so.id}')">🖨️ 印刷する</button></div>
+    </div></div>`;
+  window.scrollTo(0,0);
+}
+function printSupOrder(id) {
+  const so=appData.supplierOrders.find(x=>x.id===id); if(!so)return;
+  openPrint(`<div class="print-doc-title">ヤマシタ発注控</div>
+    <div class="print-meta">納品日：${fmtDate(so.deliveryDate)}　発注番号：${so.id}</div>
+    <table class="print-table"><tr><th>商品コード</th><th>商品名</th><th>オーダー数</th></tr>
+    ${so.lines.map(l=>`<tr><td>${l.ycode}</td><td>${l.name}</td><td class="print-right" style="font-weight:700;">${l.qty}</td></tr>`).join('')}</table>`);
+}
+async function receiveSupplierOrder(id) {
+  const so=appData.supplierOrders.find(x=>x.id===id); if(!so||so.status==='received')return;
+  if(!confirm(`${fmtDate(so.deliveryDate)} 納品分（計${so.lines.reduce((s,l)=>s+l.qty,0)}枚）を入庫して在庫に加えますか？`))return;
+  so.status='received'; so.receivedAt=new Date().toISOString();
+  await fsUpdate('supplierOrders', id, { status:'received', receivedAt:so.receivedAt });
+  const lines=so.lines.map(l=>({itemId:l.itemId, qty:l.qty}));
+  applyStockDelta(lines,1);
+  addStockLog('in', id, lines, 'ヤマシタ入庫（納品日'+so.deliveryDate+'）');
+  renderSupplierHistory();
+  showToast('入庫しました。在庫に反映されています');
+}
+
+// ===== 経営（パスワードロック） =====
+const KEIEI_PW='rinen';
+function unlockKeiei() {
+  if(document.getElementById('keiei-pw').value===KEIEI_PW){ window._keieiUnlocked=true; renderKeiei(); }
+  else showToast('パスワードが違います','error');
+}
+function renderKeiei() {
+  const body=document.getElementById('keiei-body');
+  if(!window._keieiUnlocked){
+    body.innerHTML=`<div class="section-card" style="max-width:420px;margin:20px auto;"><div class="section-card-header">🔒 経営情報</div><div class="section-card-body">
+      <div class="notice">売上・仕入・利益の情報です。経営用パスワードを入力してください。</div>
+      <div class="form-row"><label>経営用パスワード</label><input type="password" id="keiei-pw" placeholder="パスワード"></div>
+      <button class="btn btn-primary" onclick="unlockKeiei()">表示する</button>
+    </div></div>`;
+    const pw=document.getElementById('keiei-pw');
+    pw.addEventListener('keydown',e=>{if(e.key==='Enter')unlockKeiei();});
+    return;
+  }
+  const month=window._keieiMonth||toLocalISO(new Date()).slice(0,7);
+  window._keieiMonth=month;
+
+  // 月次損益（直近12ヶ月分）
+  const months=new Set();
+  appData.invoices.forEach(v=>months.add(v.month));
+  appData.supplierInvoices.forEach(v=>months.add(v.month));
+  appData.orders.forEach(o=>months.add(o.deliveryDate.slice(0,7)));
+  const mlist=[...months].sort().reverse().slice(0,12);
+  const plRows=mlist.map(m=>{
+    const inv=appData.invoices.filter(v=>v.month===m);
+    const revInv=inv.reduce((s,v)=>s+(v.linenTotal||0)+(v.systemFee||0),0);
+    const revOrd=appData.orders.filter(o=>o.deliveryDate.startsWith(m)).reduce((s,o)=>s+(o.totalAmount||0),0);
+    const rev=inv.length?revInv:revOrd;
+    const sup=appData.supplierInvoices.find(v=>v.month===m);
+    const cost=sup?sup.amount:null;
+    const gp=cost!==null?rev-cost:null;
+    return `<tr>
+      <td style="padding:9px 6px;border-bottom:1px solid var(--gray-100);font-weight:700;">${m.replace('-','/')}${inv.length?'':' <span style="font-size:10px;color:var(--gray-400);">注文ベース</span>'}</td>
+      <td style="padding:9px 6px;border-bottom:1px solid var(--gray-100);text-align:right;">${yen(rev)}</td>
+      <td style="padding:9px 6px;border-bottom:1px solid var(--gray-100);text-align:right;">${cost!==null?yen(cost):'—'}</td>
+      <td style="padding:9px 6px;border-bottom:1px solid var(--gray-100);text-align:right;font-weight:800;color:${gp===null?'inherit':gp>=0?'var(--success)':'var(--danger)'};">${gp!==null?yen(gp):'—'}</td>
+      <td style="padding:9px 6px;border-bottom:1px solid var(--gray-100);text-align:right;">${gp!==null&&rev>0?Math.round(gp/rev*1000)/10+'%':'—'}</td>
+    </tr>`;
+  }).join('');
+
+  // 選択月の品目別粗利・施設別売上・差異チェック
+  const mOrders=appData.orders.filter(o=>o.deliveryDate.startsWith(month));
+  const itemAgg={};
+  mOrders.forEach(o=>(o.items||[]).forEach(i=>{
+    if(!itemAgg[i.itemId]) itemAgg[i.itemId]={qty:0,sales:0};
+    itemAgg[i.itemId].qty+=i.totalQty; itemAgg[i.itemId].sales+=i.totalPrice;
+  }));
+  let theoCost=0;
+  const itemRows=Object.entries(itemAgg).map(([iid,a])=>{
+    const it=appData.items.find(i=>i.id===iid)||{};
+    const c=(it.cost||0)*a.qty; theoCost+=c;
+    const gp=a.sales-c;
+    return `<tr><td style="padding:8px 6px;border-bottom:1px solid var(--gray-100);">${it.name?itemLabel(it):iid}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid var(--gray-100);text-align:right;">${a.qty}枚</td>
+      <td style="padding:8px 6px;border-bottom:1px solid var(--gray-100);text-align:right;">${yen(a.sales)}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid var(--gray-100);text-align:right;">${it.cost?yen(c):'—'}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid var(--gray-100);text-align:right;font-weight:700;">${it.cost?yen(gp):'—'}</td>
+      <td style="padding:8px 6px;border-bottom:1px solid var(--gray-100);text-align:right;">${it.cost&&a.sales>0?Math.round(gp/a.sales*1000)/10+'%':'—'}</td></tr>`;
+  }).join('');
+  const facAgg={};
+  mOrders.forEach(o=>{ facAgg[o.facilityName]=(facAgg[o.facilityName]||0)+(o.totalAmount||0); });
+  const facRows=Object.entries(facAgg).sort((a,b)=>b[1]-a[1]).map(([name,amt],i)=>
+    `<div class="confirm-row"><span class="confirm-label">${i+1}. ${name}</span><span class="confirm-value">${yen(amt)}</span></div>`).join('');
+  const supInv=appData.supplierInvoices.find(v=>v.month===month);
+  const supInvList=[...appData.supplierInvoices].sort((a,b)=>b.month.localeCompare(a.month)).map(v=>`
+    <div class="doc-item"><div class="doc-info"><div class="doc-title">${v.month.replace('-','年')}月分 <span class="${v.paid?'badge-paid':'badge-unpaid'}">${v.paid?'支払済':'未払い'}</span></div>
+    <div class="doc-meta">税別${yen(v.amount)}　税込${yen(v.total||Math.floor(v.amount*1.1))}　${v.note||''}</div></div>
+    <div class="doc-actions" style="flex-direction:column;">
+      <button class="doc-btn" onclick="toggleSupInvPaid('${v.id}')">${v.paid?'未払に戻す':'支払済に'}</button>
+      <button class="facility-del-btn" onclick="deleteSupInv('${v.id}')">削除</button>
+    </div></div>`).join('');
+
+  body.innerHTML=`
+    <div class="section-card"><div class="section-card-header">📈 月次損益（税別）</div><div class="section-card-body" style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:13.5px;min-width:420px;">
+        <tr style="color:var(--gray-600);font-size:12px;"><th style="text-align:left;padding:6px;">月</th><th style="text-align:right;padding:6px;">売上</th><th style="text-align:right;padding:6px;">仕入(ヤマシタ)</th><th style="text-align:right;padding:6px;">粗利</th><th style="text-align:right;padding:6px;">粗利率</th></tr>
+        ${plRows}
+      </table>
+      <div style="font-size:11.5px;color:var(--gray-400);margin-top:8px;">※売上＝施設請求書（未作成の月は注文金額）。仕入＝下で登録したヤマシタ請求額。</div>
+    </div></div>
+    <div class="search-bar"><label style="font-size:14px;font-weight:600;">分析月</label>
+      <input type="month" id="keiei-month" value="${month}" onchange="window._keieiMonth=this.value;renderKeiei()"></div>
+    <div class="section-card"><div class="section-card-header">🧺 品目別粗利（${month.replace('-','年')}月・注文ベース）</div><div class="section-card-body" style="overflow-x:auto;">
+      ${itemRows?`<table style="width:100%;border-collapse:collapse;font-size:13px;min-width:460px;">
+        <tr style="color:var(--gray-600);font-size:12px;"><th style="text-align:left;padding:6px;">品目</th><th style="text-align:right;">枚数</th><th style="text-align:right;">売上</th><th style="text-align:right;">仕入</th><th style="text-align:right;">粗利</th><th style="text-align:right;">率</th></tr>${itemRows}</table>`:'<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:10px;">この月の注文がありません</div>'}
+      ${theoCost>0?`<div class="notice" style="margin-top:12px;margin-bottom:0;">💡 理論仕入額（配送枚数×仕入単価）＝<strong>${yen(theoCost)}</strong>${supInv?`／ヤマシタ請求 ${yen(supInv.amount)} → 差額 <strong>${yen(supInv.amount-theoCost)}</strong>（緊急対応・在庫積み増し・単価改定などの分）`:'（ヤマシタ請求を登録すると差額を確認できます）'}</div>`:''}
+    </div></div>
+    <div class="section-card"><div class="section-card-header">🏆 施設別売上（${month.replace('-','年')}月）</div><div class="section-card-body">
+      ${facRows||'<div style="color:var(--gray-400);font-size:13px;text-align:center;padding:10px;">この月の注文がありません</div>'}
+    </div></div>
+    <div class="section-card"><div class="section-card-header">🏭 ヤマシタ請求の記録</div><div class="section-card-body">
+      <div class="form-row-2col">
+        <div class="form-row"><label>対象月</label><input type="month" id="supinv-month" value="${month}"></div>
+        <div class="form-row"><label>請求額（税別）</label><input type="number" id="supinv-amount" min="0" placeholder="797425"></div>
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="addSupplierInvoice()">＋ 登録する</button>
+      <div class="mt-16">${supInvList||'<div style="color:var(--gray-400);font-size:13px;text-align:center;">まだ登録がありません</div>'}</div>
+    </div></div>`;
+}
+async function addSupplierInvoice() {
+  const month=document.getElementById('supinv-month').value;
+  const amount=parseInt(document.getElementById('supinv-amount').value)||0;
+  if(!month||!amount){ showToast('対象月と金額を入力してください','error'); return; }
+  if(appData.supplierInvoices.find(v=>v.month===month)){ showToast('この月は登録済みです（削除してから再登録）','error'); return; }
+  const v={ id:'SI-'+month, month, amount, tax:Math.floor(amount*TAX_RATE), total:amount+Math.floor(amount*TAX_RATE),
+    paid:false, note:'', createdAt:new Date().toISOString() };
+  appData.supplierInvoices.push(v);
+  await fsSet('supplierInvoices', v.id, v);
+  renderKeiei(); showToast('ヤマシタ請求を登録しました');
+}
+async function toggleSupInvPaid(id) {
+  const v=appData.supplierInvoices.find(x=>x.id===id); if(!v)return;
+  v.paid=!v.paid;
+  await fsUpdate('supplierInvoices', id, { paid:v.paid });
+  renderKeiei();
+}
+async function deleteSupInv(id) {
+  if(!confirm('この請求記録を削除しますか？'))return;
+  appData.supplierInvoices=appData.supplierInvoices.filter(x=>x.id!==id);
+  await fsDelete('supplierInvoices', id);
+  renderKeiei();
+}
+
+// ===== バックアップ =====
+function exportBackup() {
+  const blob = new Blob([JSON.stringify(appData, null, 1)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'linen-backup-' + toLocalISO(new Date()) + '.json';
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(a.href);
+  showToast('バックアップをダウンロードしました');
+}
 
 // ===== PASSWORD CHANGE =====
 async function changePassword() {
@@ -1722,7 +2416,7 @@ async function changePassword() {
   f.pw = nw;
   currentUser.facility.pw = nw;
   showToast('保存中...','info');
-  await saveData();
+  await fsUpdate('facilities', f.id, { pw: nw });
   document.getElementById('pw-current').value='';
   document.getElementById('pw-new').value='';
   document.getElementById('pw-confirm').value='';
@@ -1743,6 +2437,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded',()=>{
+  ensureAuth().catch(()=>{}); // 匿名認証を先読みしてログインを高速化
   document.getElementById('login-pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   const today=toLocalISO(new Date());
   ['delivery-date','summary-date','notes-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});

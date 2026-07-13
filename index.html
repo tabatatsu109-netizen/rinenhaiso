@@ -950,11 +950,32 @@ async function doLogin() {
     if (!f){ showToast('IDまたはパスワードが違います','error'); return; }
     await loadFacilityData(f.id);
     currentUser={id:f.id,name:f.name,role:'facility',facility:f};
+    // 次回から自動ログイン（施設のみ。管理者は共用PC対策のため保存しない）
+    try { localStorage.setItem('linen_session', JSON.stringify({ fid: f.id })); } catch(e) {}
     renderFacilityHome(); showPage('page-home');
     showToast(f.name+' でログインしました');
   } catch(e){ console.error(e); showToast('接続エラーが発生しました','error'); }
 }
-function doLogout(){ currentUser=null; document.getElementById('login-id').value=''; document.getElementById('login-pw').value=''; showPage('page-login'); }
+function doLogout(){
+  currentUser=null;
+  try { localStorage.removeItem('linen_session'); } catch(e) {}
+  document.getElementById('login-id').value=''; document.getElementById('login-pw').value='';
+  showPage('page-login');
+}
+// 保存済みセッションで自動復帰（失敗しても静かにログイン画面のまま）
+async function tryAutoLogin() {
+  let fid=null;
+  try { const s=JSON.parse(localStorage.getItem('linen_session')||'null'); fid=s&&s.fid; } catch(e) {}
+  if(!fid) return;
+  try {
+    await loadCore();
+    const f=appData.facilities.find(x=>x.id===fid);
+    if(!f){ try{ localStorage.removeItem('linen_session'); }catch(e){} return; }
+    await loadFacilityData(f.id);
+    currentUser={id:f.id,name:f.name,role:'facility',facility:f};
+    renderFacilityHome(); showPage('page-home');
+  } catch(e){ console.error(e); }
+}
 
 // ===== 次回配送日・締切 =====
 // ルール：小淵沢・長坂→火曜配送、白州→木曜配送、締切：前週水曜15:00
@@ -1066,7 +1087,11 @@ function goToOrder() {
   } else {
     window._editingOrderId = null;
     document.getElementById('dt-both').checked = true;
-    bannerEl.innerHTML = '';
+    // 変更できない既存注文（対応中・配送済みなど）がある場合は二重注文を警告
+    const existing = myOrders.find(o=>o.deliveryDate===info.iso);
+    bannerEl.innerHTML = existing
+      ? `<div class="notice">ℹ️ この配送日のご注文はすでに受付・処理されています。内容の変更はお電話ください（080-9548-3411）。このまま送信すると<strong>別の注文として追加</strong>されます。</div>`
+      : '';
   }
 
   const pc = document.getElementById('copy-prev-card');
@@ -2438,6 +2463,7 @@ document.querySelectorAll('.modal-overlay').forEach(o=>o.addEventListener('click
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded',()=>{
   ensureAuth().catch(()=>{}); // 匿名認証を先読みしてログインを高速化
+  tryAutoLogin(); // 施設は2回目以降ログイン不要
   document.getElementById('login-pw').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
   const today=toLocalISO(new Date());
   ['delivery-date','summary-date','notes-date'].forEach(id=>{const el=document.getElementById(id);if(el)el.value=today;});

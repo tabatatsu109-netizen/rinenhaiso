@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>操作デモ・説明 | Linen Order System</title>
+<style>
+  :root {
+    --primary: #1a5f7a; --primary-light: #2980a8; --accent: #e8f4f8; --accent2: #d0eaf5;
+    --success: #27ae60; --warning: #f39c12; --danger: #e74c3c;
+    --gray-100: #f1f5f9; --gray-200: #e2e8f0; --gray-300: #cbd5e1; --gray-400: #94a3b8;
+    --gray-600: #475569; --gray-700: #334155; --gray-800: #1e293b;
+    --font: 'Hiragino Kaku Gothic ProN','Meiryo','Yu Gothic',sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font); background: var(--gray-100); color: var(--gray-800); font-size: 15px; line-height: 1.7; }
+
+  .demo-header { background: var(--gray-800); color: white; padding: 16px 18px; position: sticky; top: 0; z-index: 100; }
+  .demo-header-badge { display: inline-block; background: var(--warning); color: #4a3200; font-size: 11px; font-weight: 800; padding: 2px 10px; border-radius: 12px; letter-spacing: 1px; }
+  .demo-header h1 { font-size: 17px; margin-top: 4px; }
+  .demo-header p { font-size: 12px; opacity: 0.75; }
+
+  .flow-tabs { display: flex; background: white; border-bottom: 2px solid var(--gray-200); position: sticky; top: 74px; z-index: 99; }
+  .flow-tab { flex: 1; padding: 13px 6px; text-align: center; font-size: 13.5px; font-weight: 700; color: var(--gray-600); cursor: pointer; border-bottom: 3px solid transparent; }
+  .flow-tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+  .flow { display: none; max-width: 560px; margin: 0 auto; padding: 18px 14px 60px; }
+  .flow.active { display: block; }
+  .flow-intro { background: var(--accent); border: 1.5px solid var(--accent2); border-radius: 12px; padding: 14px 16px; font-size: 14px; margin-bottom: 20px; }
+  .flow-intro strong { color: var(--primary); }
+
+  .step { margin-bottom: 26px; }
+  .step-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .step-num { background: var(--primary); color: white; min-width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; }
+  .step-title { font-size: 16px; font-weight: 800; color: var(--primary); }
+  .step-desc { font-size: 14px; color: var(--gray-700); margin-bottom: 10px; padding-left: 42px; }
+  .step-desc .point { color: var(--danger); font-weight: 700; }
+
+  /* モック画面（スマホ枠） */
+  .phone { background: white; border: 2px solid var(--gray-300); border-radius: 18px; max-width: 360px; margin: 0 auto; overflow: hidden; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+  .phone-bar { background: var(--primary); color: white; padding: 10px 14px; font-size: 13px; font-weight: 700; display: flex; justify-content: space-between; align-items: center; }
+  .phone-bar.dark { background: var(--gray-800); }
+  .phone-body { padding: 12px; background: var(--gray-100); }
+  .card { background: white; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); font-size: 13.5px; }
+  .btn-mock { display: block; width: 100%; padding: 12px; border-radius: 10px; text-align: center; font-weight: 800; font-size: 14px; margin-top: 8px; border: none; }
+  .btn-mock.blue { background: var(--primary); color: white; }
+  .btn-mock.green { background: var(--success); color: white; }
+  .btn-mock.outline { background: white; color: var(--primary); border: 2px solid var(--primary); }
+  .tap { position: relative; }
+  .tap::after { content: '👆 タップ'; position: absolute; right: -4px; top: -12px; background: var(--danger); color: white; font-size: 11px; font-weight: 800; padding: 2px 9px; border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.25); }
+
+  .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .menu-item { background: white; border-radius: 10px; padding: 12px 6px; text-align: center; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+  .menu-item .ico { font-size: 22px; display: block; }
+  .menu-item .lbl { font-size: 12px; font-weight: 700; color: var(--primary); }
+
+  .qty-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--gray-100); }
+  .qty-ctrl { display: flex; align-items: center; gap: 0; }
+  .qty-btn { width: 34px; height: 34px; border: 2px solid var(--gray-300); background: white; font-weight: 800; font-size: 17px; color: var(--primary); display: flex; align-items: center; justify-content: center; }
+  .qty-val { width: 44px; height: 34px; border-top: 2px solid var(--gray-300); border-bottom: 2px solid var(--gray-300); display: flex; align-items: center; justify-content: center; font-weight: 800; background: #f8fafc; }
+
+  .notice-mock { background: #fff8e1; border-left: 4px solid var(--warning); border-radius: 0 8px 8px 0; padding: 9px 12px; font-size: 12.5px; color: #5d4037; margin-bottom: 10px; }
+  .notice-mock.blue { background: var(--accent); border-left-color: var(--primary); color: var(--gray-700); }
+
+  .dlv-row-mock { padding: 10px 12px; border-bottom: 1px solid var(--gray-100); background: white; }
+  .dlv-row-mock.done { background: #f0faf4; }
+  .dlv-top-mock { display: flex; align-items: center; gap: 8px; }
+  .dlv-num { background: var(--primary); color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; }
+  .dlv-name-mock { flex: 1; font-size: 13.5px; font-weight: 700; }
+  .done-btn-mock { min-width: 68px; padding: 9px 6px; border-radius: 8px; border: 2px solid var(--gray-300); background: white; font-size: 12px; font-weight: 700; color: var(--gray-600); text-align: center; }
+  .done-btn-mock.on { background: var(--success); border-color: var(--success); color: white; }
+  .dlv-bottom-mock { display: flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 12px; color: var(--gray-700); }
+  .tel-mock { width: 34px; height: 34px; border-radius: 8px; background: var(--accent); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .move-mock { display: flex; gap: 4px; }
+  .move-mock span { width: 34px; height: 34px; border-radius: 8px; border: 2px solid var(--gray-300); display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 13px; }
+  .badge-r { background: #fce4ec; color: #ad1457; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; margin-left: 4px; }
+
+  .status-b { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 12px; }
+  .st-new { background: #fff3cd; color: #856404; }
+  .st-done { background: #d4edda; color: #155724; }
+
+  .qa { background: white; border-radius: 12px; padding: 16px; margin-top: 26px; box-shadow: 0 1px 6px rgba(0,0,0,0.06); }
+  .qa h3 { font-size: 15px; color: var(--primary); margin-bottom: 8px; }
+  .qa dt { font-weight: 700; font-size: 13.5px; margin-top: 10px; }
+  .qa dt::before { content: 'Q. '; color: var(--danger); font-weight: 800; }
+  .qa dd { font-size: 13.5px; color: var(--gray-700); margin-left: 0; }
+  .qa dd::before { content: 'A. '; color: var(--primary); font-weight: 800; }
+
+  .arrow-down { text-align: center; font-size: 20px; color: var(--gray-400); margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<div class="demo-header">
+  <span class="demo-header-badge">デモ・説明用</span>
+  <h1>🧺 リネン注文システム 操作の流れ</h1>
+  <p>これは説明用の見本です。触っても実際のデータには影響しません。</p>
+</div>
+
+<div class="flow-tabs">
+  <div class="flow-tab active" onclick="showFlow(0,this)">🏠 施設の流れ</div>
+  <div class="flow-tab" onclick="showFlow(1,this)">🚚 配送担当の流れ</div>
+  <div class="flow-tab" onclick="showFlow(2,this)">🗂 管理者の流れ</div>
+</div>
+
+<!-- ================= 施設の流れ ================= -->
+<div class="flow active">
+  <div class="flow-intro">
+    施設のスタッフさん（高齢の方も多い）が使う画面です。<br>
+    合言葉は <strong>「QRを読む → 前回と同じ → 送信」</strong>。慣れれば30秒で終わります。
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">1</div><div class="step-title">QRコードを読んでログイン（最初の1回だけ）</div></div>
+    <div class="step-desc">配った案内のQRを読むとログイン画面が開きます。紙に書いてあるIDとパスワードを入れる。<span class="point">2回目からは自動でホームが開く</span>ので、ログインはもう不要です。</div>
+    <div class="phone">
+      <div class="phone-bar">Linen Order System</div>
+      <div class="phone-body">
+        <div class="card">
+          <strong>ログイン</strong><br>
+          ログインID：<span style="font-family:monospace;background:var(--gray-100);padding:1px 8px;border-radius:5px;">den</span><br>
+          パスワード：<span style="font-family:monospace;background:var(--gray-100);padding:1px 8px;border-radius:5px;">••••</span>
+          <div class="btn-mock blue tap">ログイン</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">2</div><div class="step-title">ホームで配送日と締切を確認</div></div>
+    <div class="step-desc">次にリネンが届く日と、注文の締切が一番上に出ます。<span class="point">締切は前の週の水曜15時</span>です。</div>
+    <div class="phone">
+      <div class="phone-bar">ホーム</div>
+      <div class="phone-body">
+        <div class="card" style="background:linear-gradient(135deg,#1a5f7a,#2980a8);color:white;">
+          📅 次回配送予定日<br><strong style="font-size:17px;">7月14日（火）</strong><br>
+          <span style="font-size:11px;opacity:.85;">注文締切：7月8日（水）15:00</span>
+        </div>
+        <div class="menu-grid">
+          <div class="menu-item tap"><span class="ico">📝</span><span class="lbl">リネン注文</span></div>
+          <div class="menu-item"><span class="ico">📋</span><span class="lbl">注文履歴</span></div>
+          <div class="menu-item"><span class="ico">📄</span><span class="lbl">納品書・請求書</span></div>
+          <div class="menu-item"><span class="ico">🖋️</span><span class="lbl">契約・同意</span></div>
+          <div class="menu-item"><span class="ico">📞</span><span class="lbl">お問い合わせ</span></div>
+          <div class="menu-item"><span class="ico">🔑</span><span class="lbl">パスワード変更</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">3</div><div class="step-title">注文する（前回コピーが最速）</div></div>
+    <div class="step-desc">「前回と同じ内容で注文」を押せば入力ゼロ。数を変えたい時は ＋ − を押すだけ。<span class="point">回収だけの週も「♻️回収のみ」を選んで必ず送信</span>してもらいます。</div>
+    <div class="phone">
+      <div class="phone-bar">リネン注文</div>
+      <div class="phone-body">
+        <div class="card" style="border:2px dashed var(--primary-light);background:var(--accent);">
+          📋 前回の注文（7月7日）<br><span style="font-size:12px;color:var(--gray-600);">シーツS: 3束　枕カバー: 1束</span>
+          <div class="btn-mock outline tap">前回と同じ内容で注文</div>
+        </div>
+        <div class="card">
+          🚚 配送区分：<b>📦 納品＋回収</b> ／ ♻️ 回収のみ
+        </div>
+        <div class="card">
+          <div class="qty-row"><span><b>シーツ S</b><br><span style="font-size:11px;color:var(--gray-400);">1束10枚 ¥2,250</span></span>
+            <div class="qty-ctrl"><span class="qty-btn">−</span><span class="qty-val">3</span><span class="qty-btn">＋</span></div></div>
+          <div class="qty-row"><span><b>枕カバー</b><br><span style="font-size:11px;color:var(--gray-400);">1束50枚 ¥6,000</span></span>
+            <div class="qty-ctrl"><span class="qty-btn">−</span><span class="qty-val">1</span><span class="qty-btn">＋</span></div></div>
+        </div>
+        <div class="btn-mock blue">注文内容を確認する →</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">4</div><div class="step-title">確認して送信 → 完了</div></div>
+    <div class="step-desc">内容と金額を確かめて緑のボタンを押すと、注文番号が出て完了。この瞬間に<span class="point">こちらの管理画面にも即座に届いています</span>。</div>
+    <div class="phone">
+      <div class="phone-bar">注文確認</div>
+      <div class="phone-body">
+        <div class="card">シーツ S：3束（30枚）<br>枕カバー：1束（50枚）<br><b>合計 ¥12,750（税別）</b></div>
+        <div class="btn-mock green tap">✓ 注文を送信する</div>
+        <div class="arrow-down">⬇</div>
+        <div class="card" style="text-align:center;">✅ <b style="color:var(--success);">注文が完了しました</b><br><span style="font-size:12px;color:var(--gray-600);">注文番号 20260708-001</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">5</div><div class="step-title">締切前なら、開き直すだけで変更できる</div></div>
+    <div class="step-desc">「やっぱりシーツもう1束…」という時は、もう一度「リネン注文」を開くと<span class="point">送信済みの内容が入った状態</span>で開きます。直して送信すれば上書き。<b>注文が2重になることはありません。</b></div>
+    <div class="phone">
+      <div class="phone-bar">リネン注文</div>
+      <div class="phone-body">
+        <div class="notice-mock">✏️ この配送日の注文（20260708-001）は送信済みです。締切までは内容を変更できます。修正して送信すると<b>上書き</b>されます。</div>
+        <div class="btn-mock green">✓ 変更を保存する</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="qa">
+    <h3>施設からよくある質問（想定）</h3>
+    <dl>
+      <dt>締切を過ぎてしまった</dt><dd>アプリに警告が出ます。緊急ならお電話ください→こちらで「電話注文」として登録できます。</dd>
+      <dt>パスワードを忘れた</dt><dd>管理画面の施設管理でいつでも確認・再設定できます。</dd>
+      <dt>ログイン画面に戻ってしまった</dt><dd>もう一度ID・パスワードでログインすれば、また自動ログインに戻ります。</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- ================= 配送担当の流れ ================= -->
+<div class="flow">
+  <div class="flow-intro">
+    配送担当者さんに覚えてもらうのは<strong>この1画面だけ</strong>です。<br>
+    管理者IDでログイン →「<strong>配送一覧</strong>」タブ。やることは「<strong>並べる・電話する・済にする</strong>」の3つ。
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">1</div><div class="step-title">朝：配送日を選んで「表示」</div></div>
+    <div class="step-desc">その日に回る施設が一覧で出ます。上の「済 0/12」で進み具合がずっと見えます。</div>
+    <div class="phone">
+      <div class="phone-bar dark">管理者画面 ▸ 配送一覧</div>
+      <div class="phone-body">
+        <div class="card" style="display:flex;gap:8px;align-items:center;">📅 <b>2026-07-14</b><span class="btn-mock blue tap" style="width:auto;padding:8px 14px;margin:0;">表示</span></div>
+        <div class="card" style="padding:0;overflow:hidden;">
+          <div style="background:var(--gray-100);padding:8px 12px;font-size:12px;font-weight:700;color:var(--gray-600);">7月14日（火）配送一覧　計12件（済 0/12）</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">2</div><div class="step-title">▲▼で今日の回る順番を決める</div></div>
+    <div class="step-desc">▲▼を押すと順番が入れ替わり、<span class="point">その場で自動保存</span>。その日の件数を見て、担当者さんの判断で自由に決めてOK。後から入った注文には「新着」マークが付いて一番下に出ます。</div>
+    <div class="phone">
+      <div class="phone-bar dark">配送一覧</div>
+      <div class="phone-body" style="padding:0;">
+        <div class="dlv-row-mock">
+          <div class="dlv-top-mock"><span class="dlv-num">1</span><span class="dlv-name-mock">ステンドハウスDEN</span><span class="done-btn-mock">済にする</span></div>
+          <div class="dlv-bottom-mock"><span style="flex:1;">シーツS:3束　枕カバー:1束</span><span class="tel-mock">📞</span><span class="move-mock tap"><span>▲</span><span>▼</span></span></div>
+        </div>
+        <div class="dlv-row-mock">
+          <div class="dlv-top-mock"><span class="dlv-num">2</span><span class="dlv-name-mock">泉園</span><span class="done-btn-mock">済にする</span></div>
+          <div class="dlv-bottom-mock"><span style="flex:1;">シーツS:7束　シーツW:3束</span><span class="tel-mock">📞</span><span class="move-mock"><span>▲</span><span>▼</span></span></div>
+        </div>
+        <div class="dlv-row-mock">
+          <div class="dlv-top-mock"><span class="dlv-num">3</span><span class="dlv-name-mock">ポリアンナ<span class="badge-r">回収のみ</span></span><span class="done-btn-mock">済にする</span></div>
+          <div class="dlv-bottom-mock"><span style="flex:1;">（回収のみ）</span><span class="tel-mock">📞</span><span class="move-mock"><span>▲</span><span>▼</span></span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">3</div><div class="step-title">届けたら「済にする」— これが一番大事</div></div>
+    <div class="step-desc">済を押すと3つのことが自動で起きます：<b>①配送記録が残る ②納品書が自動発行され施設からも見える ③倉庫在庫が自動で減る</b>。<span class="point">押し忘れだけ注意</span>（納品書が発行されません）。</div>
+    <div class="phone">
+      <div class="phone-bar dark">配送一覧（済 1/12）</div>
+      <div class="phone-body" style="padding:0;">
+        <div class="dlv-row-mock done">
+          <div class="dlv-top-mock"><span class="dlv-num">1</span><span class="dlv-name-mock" style="color:var(--gray-400);">ステンドハウスDEN</span><span class="done-btn-mock on tap">✓ 済</span></div>
+          <div class="dlv-bottom-mock"><span style="flex:1;">シーツS:3束　枕カバー:1束</span></div>
+        </div>
+        <div style="padding:10px;"><div class="notice-mock blue" style="margin:0;">💬 済にしました（納品書を発行）</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">4</div><div class="step-title">困った時（間違い・圏外・連絡）</div></div>
+    <div class="step-desc">
+      ・間違えて押した → <b>もう一度タップで取消</b>（確認が出ます）<br>
+      ・山で圏外 → <b>そのまま押してOK</b>。電波が戻った時に自動送信されます<br>
+      ・施設に連絡したい → 各行の<b>📞ボタンでそのまま発信</b><br>
+      ・紙が欲しい → 「配送一覧を印刷」で同じ順番・済チェック付きで印刷できます
+    </div>
+  </div>
+
+  <div class="qa">
+    <h3>担当者への説明のコツ</h3>
+    <dl>
+      <dt>何を覚えてもらう？</dt><dd>「配送一覧タブを開く → ▲▼で並べる → 届けたら済」の3つだけ。他のタブは触らなくてOKと伝えると気が楽になります。</dd>
+      <dt>スマホの設定は？</dt><dd>ブラウザの通常モードで開く（プライベートモードだと圏外機能が効きません）。ホーム画面に追加しておくと1タップで開けます。</dd>
+    </dl>
+  </div>
+</div>
+
+<!-- ================= 管理者の流れ ================= -->
+<div class="flow">
+  <div class="flow-intro">
+    あなた（管理者）の1週間の流れです。<strong>水曜締切 → 発注 → 火曜配送 → 月末請求</strong>のサイクルにタブが対応しています。
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">1</div><div class="step-title">水曜15時まで：注文が集まる</div></div>
+    <div class="step-desc">施設の注文はリアルタイムで「注文管理」に入ります。電話で受けた分は<b>「📞＋電話注文を登録」</b>から代理入力（前回コピー付き・締切後でもOK）。</div>
+    <div class="phone">
+      <div class="phone-bar dark">注文管理</div>
+      <div class="phone-body">
+        <div class="btn-mock blue tap" style="width:auto;display:inline-block;padding:8px 14px;">📞 ＋ 電話注文を登録</div>
+        <div class="card"><b>ステンドハウスDEN</b> <span class="status-b st-new">未対応</span><br><span style="font-size:12px;color:var(--gray-600);">20260708-001　配送: 2026-07-14　¥12,750</span></div>
+        <div class="card"><b>泉園</b> <span style="color:var(--primary);font-size:11px;">📞電話</span> <span class="status-b st-new">未対応</span><br><span style="font-size:12px;color:var(--gray-600);">20260709-001　配送: 2026-07-14　¥21,550</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">2</div><div class="step-title">水曜午後：ヤマシタへ発注</div></div>
+    <div class="step-desc">「発注書」タブで納品日と配送日を選んで「計算」→ <b>発注数＝在庫の不足分＋施設の注文分</b>が自動で出ます。確定すると<span class="point">ヤマシタのExcelと同じ並び順の転記表</span>が出るので、黄色セルに写してメール送信。</div>
+    <div class="phone">
+      <div class="phone-bar dark">発注書</div>
+      <div class="phone-body">
+        <div class="notice-mock">⏰ 発注締切：7月9日（木）午前中まで</div>
+        <div class="card" style="font-size:12.5px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <tr style="background:var(--gray-100);"><th style="padding:5px;text-align:left;">コード</th><th style="text-align:left;">商品名</th><th style="text-align:right;">数</th></tr>
+            <tr><td style="padding:5px;font-family:monospace;">R01120008</td><td>シーツ 180</td><td style="text-align:right;font-weight:800;color:var(--primary);">260</td></tr>
+            <tr><td style="padding:5px;font-family:monospace;">R01140117</td><td>ピロケースＷ 50</td><td style="text-align:right;font-weight:800;color:var(--primary);">450</td></tr>
+          </table>
+        </div>
+        <div class="btn-mock blue">✓ この内容で発注を確定する</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">3</div><div class="step-title">納品が届いたら：「入庫」ボタン</div></div>
+    <div class="step-desc">ヤマシタから倉庫に届いたら発注履歴の<b>「📥入庫する」</b>を押すだけで在庫に加算。火曜朝の「準備集計」印刷も今まで通り使えます。</div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">4</div><div class="step-title">火曜：配送担当が「済」→ 納品書は全自動</div></div>
+    <div class="step-desc">担当者が済を入れるたび、納品書の発行・施設への公開・在庫の出庫が自動で進みます。日付を直したい時は「納品書」タブの日付欄から変更できます。</div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">5</div><div class="step-title">配送後：在庫を数えて棚卸</div></div>
+    <div class="step-desc">「在庫」タブに実際に数えた枚数を入れて「棚卸を保存」。<span class="point">実際の数が常に正</span>という考え方なので、ズレていたら遠慮なく上書きしてOK。不足があると⚠️が出て、次の発注計算に自動反映されます。</div>
+  </div>
+
+  <div class="step">
+    <div class="step-head"><div class="step-num">6</div><div class="step-title">月末：請求と経営チェック</div></div>
+    <div class="step-desc">「請求書」タブで一括作成（リネン代＋システム利用料＋税を自動計算）。「🔒経営」タブ（パスワード制・担当者には見えません）でヤマシタの請求額を入力すると、<b>月の売上・仕入・粗利</b>と品目別の利益、施設別ランキングまで出ます。</div>
+    <div class="phone">
+      <div class="phone-bar dark">🔒 経営</div>
+      <div class="phone-body">
+        <div class="card" style="font-size:12.5px;">
+          <table style="width:100%;border-collapse:collapse;">
+            <tr style="background:var(--gray-100);"><th style="padding:5px;">月</th><th style="text-align:right;">売上</th><th style="text-align:right;">仕入</th><th style="text-align:right;">粗利</th></tr>
+            <tr><td style="padding:5px;">2026/05</td><td style="text-align:right;">¥1,191,070</td><td style="text-align:right;">¥797,425</td><td style="text-align:right;font-weight:800;color:var(--success);">¥393,645</td></tr>
+          </table>
+          <div style="font-size:10px;color:var(--gray-400);margin-top:4px;">※数字はデモ用の例です</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="qa">
+    <h3>1週間のまとめ</h3>
+    <dl>
+      <dt>水曜</dt><dd>15時締切 → 電話分を登録 → 発注書タブで計算 → Excelに転記してヤマシタへ</dd>
+      <dt>納品日</dt><dd>届いたら「入庫」ボタン</dd>
+      <dt>火曜</dt><dd>準備集計を印刷 → 配送担当が「済」を入れて回る（納品書は自動）</dd>
+      <dt>配送後</dt><dd>在庫を数えて棚卸</dd>
+      <dt>月末</dt><dd>請求書一括作成 → 経営タブでヤマシタ請求を入力して利益確認</dd>
+    </dl>
+  </div>
+</div>
+
+<script>
+function showFlow(i, el) {
+  document.querySelectorAll('.flow').forEach((f, j) => f.classList.toggle('active', i === j));
+  document.querySelectorAll('.flow-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  window.scrollTo(0, 0);
+}
+</script>
+</body>
+</html>

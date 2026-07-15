@@ -628,9 +628,10 @@
     <div class="search-bar">
       <label style="font-size:14px;font-weight:600;">対象月</label>
       <input type="month" id="invoice-month">
-      <button class="btn btn-primary btn-inline btn-sm" onclick="generateInvoices()">請求書を一括作成</button>
+      <button class="btn btn-primary btn-inline btn-sm" onclick="generateInvoices()">① 一括作成</button>
+      <button class="btn btn-success btn-inline btn-sm" onclick="publishInvoices()">📢 ② 施設に公開</button>
     </div>
-    <div class="notice">月末締め・翌月10日払いで施設ごとに自動集計します（リネン利用料＋システム利用料¥1,000＋消費税10%）。</div>
+    <div class="notice">①作成した時点では<strong>施設からはまだ見えません</strong>。内容を確認して、公開したいタイミングで②を押すと各施設のマイページに表示されます。<br>納品がひと月に一度もない施設は、システム利用料0円・請求書も作成されません。</div>
     <div id="invoices-list"></div>
   </div>
 
@@ -1043,7 +1044,7 @@ function renderFacilityHome() {
 
   // アラート
   const alerts=[];
-  const myUnpaid = appData.invoices.filter(v=>v.facilityId===f.id && v.status==='unpaid');
+  const myUnpaid = appData.invoices.filter(v=>v.facilityId===f.id && v.status==='unpaid' && v.published!==false);
   if (myUnpaid.length>0) alerts.push(`<div class="alert-banner alert-danger" onclick="switchDocsTab('invoices');renderFacilityDocs();showPage('page-docs')">💰 未払いの請求書が ${myUnpaid.length} 件あります（タップで確認）</div>`);
   const consent = appData.contracts.find(c=>c.facilityId===f.id && c.agreed);
   if (!consent) alerts.push(`<div class="alert-banner alert-warning" onclick="renderContractPage();showPage('page-contract')">🖋️ 契約内容の確認・同意をお願いします（タップで確認）</div>`);
@@ -1258,7 +1259,7 @@ function renderFacilityDocs() {
       <div class="doc-actions"><button class="doc-btn" onclick="printDeliveryNote('${n.id}')">📄 表示/印刷</button></div></div>`).join('')
       : '<div class="empty-state"><span class="empty-state-icon">📄</span><div class="empty-state-text">この月の納品書はありません</div></div>';
   } else {
-    const list=appData.invoices.filter(v=>v.facilityId===currentUser.id&&v.month===month);
+    const list=appData.invoices.filter(v=>v.facilityId===currentUser.id&&v.month===month&&v.published!==false);
     c.innerHTML = list.length ? list.map(v=>`
       <div class="doc-item"><div class="doc-info"><div class="doc-title">${v.month.replace('-','年')}月分 請求書 <span class="${v.status==='paid'?'badge-paid':'badge-unpaid'}">${v.status==='paid'?'支払済':'未払い'}</span></div>
       <div class="doc-meta">請求書番号：${v.id}　合計 ${yen(v.total)}（税込）<br>お支払期限：${fmtDate(v.dueDate)}</div></div>
@@ -1921,13 +1922,14 @@ async function generateInvoices() {
   appData.facilities.forEach(f=>{
     if(appData.invoices.find(v=>v.facilityId===f.id&&v.month===month)) return; // 既存はスキップ
     const orders=appData.orders.filter(o=>o.facilityId===f.id&&o.deliveryDate.startsWith(month));
-    if(orders.length===0) return; // 発注ゼロの月は請求書を作成しない（第7条：システム利用料もなし）
     const linenTotal=orders.reduce((s,o)=>s+(o.totalAmount||0),0);
+    // 納品がひと月に一度もない施設は請求なし（回収のみ・注文なしの月はシステム利用料も0円）
+    if(linenTotal===0) return;
     const sysFee=(f.systemFee!==false)?SYSTEM_FEE:0;
     const subtotal=linenTotal+sysFee;
     const tax=Math.floor(subtotal*TAX_RATE);
     targets.push({ facilityId:f.id, facilityName:f.name, month, linenTotal, systemFee:sysFee, tax,
-      total:subtotal+tax, dueDate, status:'unpaid', orderCount:orders.length, createdAt:new Date().toISOString() });
+      total:subtotal+tax, dueDate, status:'unpaid', published:false, orderCount:orders.length, createdAt:new Date().toISOString() });
   });
   if(targets.length===0){ showToast('新規作成対象がありません（発行済みか注文なし）','info'); renderInvoicesAdmin(); return; }
   showToast('保存中...','info');
@@ -1939,6 +1941,45 @@ async function generateInvoices() {
   });
   await commitOps(ops);
   renderInvoicesAdmin(); showToast(targets.length+'件の請求書を作成しました');
+}
+// ⑤請求書の一括公開：作成→内容確認→このボタンで初めて施設に見える
+async function publishInvoices() {
+  const month=document.getElementById('invoice-month').value;
+  if(!month){ showToast('対象月を選択してください','error'); return; }
+  const targets=appData.invoices.filter(v=>v.month===month&&v.published===false);
+  if(!targets.length){ showToast('未公開の請求書がありません','info'); return; }
+  if(!confirm(`${month.replace('-','年')}月分の請求書 ${targets.length}件を各施設のマイページに公開しますか？\n（公開すると施設側の「納品書・請求書」に表示されます）`))return;
+  showToast('公開中...','info');
+  const ops=targets.map(v=>{ v.published=true; return {type:'update',coll:'invoices',id:v.id,data:{published:true}}; });
+  await commitOps(ops);
+  renderInvoicesAdmin(); showToast(targets.length+'件の請求書を公開しました');
+}
+// ②未払い施設への督促メール（メールアプリが文面入りで開く）
+function sendReminderMail(invId) {
+  const v=appData.invoices.find(x=>x.id===invId); if(!v)return;
+  const f=appData.facilities.find(x=>x.id===v.facilityId)||{};
+  if(!f.email){ showToast('この施設のメールアドレスが未登録です（施設管理で登録してください）','error'); return; }
+  const [y,m]=v.month.split('-');
+  const subject=`【ご請求のご案内】${y}年${parseInt(m)}月分 リネン利用料（${v.facilityName}様）`;
+  const body=
+`${v.facilityName} 御中
+
+いつもお世話になっております。
+合同会社nofootballです。
+
+${y}年${parseInt(m)}月分のご利用料金をご案内いたします。
+
+■ご請求金額：${yen(v.total)}（税込）
+■お支払期限：${fmtDate(v.dueDate)}
+■請求書：マイページの「納品書・請求書」からご確認・印刷いただけます
+
+お支払いに関するお問い合わせ：
+担当 田畑　080-1233-9862
+
+※行き違いでお支払い済みの場合は、何卒ご容赦ください。
+
+合同会社nofootball`;
+  location.href=`mailto:${f.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }
 async function toggleInvoicePaid(id) {
   const v=appData.invoices.find(x=>x.id===id); if(!v)return;
@@ -1958,10 +1999,11 @@ function renderInvoicesAdmin() {
   const list=[...appData.invoices].sort((a,b)=>b.id.localeCompare(a.id));
   document.getElementById('invoices-list').innerHTML = list.length ? list.map(v=>`
     <div class="doc-item"><div class="doc-info">
-      <div class="doc-title">${v.facilityName}　${v.month.replace('-','年')}月分 <span class="${v.status==='paid'?'badge-paid':'badge-unpaid'}">${v.status==='paid'?'支払済':'未払い'}</span></div>
+      <div class="doc-title">${v.facilityName}　${v.month.replace('-','年')}月分 <span class="${v.status==='paid'?'badge-paid':'badge-unpaid'}">${v.status==='paid'?'支払済':'未払い'}</span> <span class="${v.published===false?'badge-inactive':'badge-active'}">${v.published===false?'🔒未公開':'公開済'}</span></div>
       <div class="doc-meta">${v.id}　リネン${yen(v.linenTotal)}＋利用料${yen(v.systemFee)}＋税${yen(v.tax)}＝<strong>${yen(v.total)}</strong><br>期限：${fmtDate(v.dueDate)}</div></div>
     <div class="doc-actions" style="flex-direction:column;">
       <button class="doc-btn" onclick="printInvoice('${v.id}')">📄 印刷</button>
+      ${v.status!=='paid'?`<button class="doc-btn" style="background:#fff3cd;border-color:#ffe082;color:#7a5c00;" onclick="sendReminderMail('${v.id}')">📧 督促メール</button>`:''}
       <button class="doc-btn" onclick="toggleInvoicePaid('${v.id}')">${v.status==='paid'?'未払に戻す':'支払済に'}</button>
       <button class="facility-del-btn" onclick="deleteInvoice('${v.id}')">削除</button>
     </div></div>`).join('')
@@ -1985,7 +2027,7 @@ function printInvoice(invId) {
       <tr><td class="print-right" style="font-weight:700;font-size:12pt;">合計（税込）</td><td class="print-right" style="font-weight:700;font-size:12pt;">${yen(v.total)}</td></tr>
     </table>
     <div class="print-total-box">ご請求金額　${yen(v.total)}</div>
-    <div class="print-meta" style="margin-top:5mm;">お支払期限：<strong>${fmtDate(v.dueDate)}</strong>（月末締め・翌月10日払い）<br>お振込先：（銀行口座情報）<br>※誠に恐れ入りますが、振込手数料は貴施設にてご負担願います。</div>`);
+    <div class="print-meta" style="margin-top:5mm;">お支払期限：<strong>${fmtDate(v.dueDate)}</strong>（月末締め・翌月10日払い）<br>お振込先：（銀行口座情報）<br>※誠に恐れ入りますが、振込手数料は貴施設にてご負担願います。<br>お支払いに関するお問い合わせ：担当 田畑　080-1233-9862</div>`);
 }
 
 // ===== CONTRACTS (admin) =====

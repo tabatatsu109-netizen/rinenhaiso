@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>LINEN DELIVERY｜八ヶ岳エリアの宿泊施設向けリネン配送サービス</title>
+<meta name="description" content="山梨県北杜市（小淵沢・長坂・八ヶ岳エリア）のペンション・ホテル・宿泊施設向けリネンレンタル＋クリーニング。シーツ1枚220円〜、毎週の定期配送。注文はスマホから24時間。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0E3A78;
+  --navy-d:#0A2C5C;
+  --blue:#0B8FF0;
+  --blue-d:#0A73C4;
+  --ink:#20293A;
+  --sub:#5B6779;
+  --line:#E3E9F2;
+  --bg:#F2F7FD;
+  --radius:14px;
+  --max:1100px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth;scroll-padding-top:72px}
+body{
+  font-family:"Noto Sans JP",-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",sans-serif;
+  color:var(--ink);background:#fff;line-height:1.8;font-size:16px;-webkit-font-smoothing:antialiased;
+}
+img{max-width:100%;display:block}
+a{color:inherit;text-decoration:none}
+.wrap{max-width:var(--max);margin:0 auto;padding:0 20px}
+
+/* ---------- header ---------- */
+header{
+  position:fixed;top:0;left:0;right:0;height:64px;background:rgba(255,255,255,.95);
+  backdrop-filter:blur(8px);border-bottom:1px solid var(--line);z-index:100;
+}
+.hdr{max-width:var(--max);margin:0 auto;padding:0 16px;height:64px;display:flex;align-items:center;gap:24px}
+.hdr .logo{height:40px;width:auto}
+.nav{margin-left:auto;display:flex;align-items:center;gap:26px;font-size:14px;font-weight:500}
+.nav a:hover{color:var(--blue)}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  background:var(--blue);color:#fff;font-weight:700;border-radius:10px;
+  padding:12px 22px;font-size:15px;line-height:1.4;text-align:center;
+  box-shadow:0 4px 14px rgba(11,143,240,.28);transition:.2s;border:none;cursor:pointer;
+}
+.btn:hover{background:var(--blue-d);transform:translateY(-1px)}
+.btn-lg{padding:18px 44px;font-size:18px;border-radius:12px}
+.btn-tel{background:#fff;color:var(--navy);border:2px solid var(--navy);box-shadow:none}
+.btn-tel:hover{background:var(--navy);color:#fff}
+.hdr .btn{padding:10px 18px;font-size:14px}
+@media(max-width:860px){.nav a:not(.btn){display:none}.hdr{gap:12px}.hdr .logo{height:34px}}
+
+/* ---------- hero ---------- */
+.hero{margin-top:64px;background:linear-gradient(180deg,#EAF3FE 0%,#F7FBFF 100%);padding:56px 0 64px;position:relative;overflow:hidden}
+.hero-in{max-width:var(--max);margin:0 auto;padding:0 20px;display:grid;grid-template-columns:1fr 1.05fr;gap:48px;align-items:center}
+.hero .eyebrow{
+  display:inline-block;background:var(--navy);color:#fff;font-size:13px;font-weight:700;
+  padding:6px 16px;border-radius:999px;letter-spacing:.04em;margin-bottom:20px;
+}
+.hero h1{font-size:40px;font-weight:900;line-height:1.4;letter-spacing:.01em;color:var(--navy)}
+.hero h1 .mark{
+  background:linear-gradient(transparent 62%,#B9E0FF 62%);padding:0 2px;
+}
+.hero .lead{margin-top:20px;color:var(--sub);font-size:16px}
+.price-badge{
+  margin:26px 0 28px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;
+}
+.price-badge .lbl{font-size:14px;font-weight:700;color:var(--sub)}
+.price-badge .num{font-size:52px;font-weight:900;color:var(--blue);line-height:1;letter-spacing:-.02em}
+.price-badge .unit{font-size:18px;font-weight:700;color:var(--navy)}
+.hero-cta{display:flex;gap:12px;flex-wrap:wrap}
+.hero-img{border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(14,58,120,.16)}
+@media(max-width:860px){
+  .hero-in{grid-template-columns:1fr;gap:28px}
+  .hero h1{font-size:28px}
+  .price-badge .num{font-size:44px}
+  .hero-cta .btn{width:100%}
+}
+
+/* ---------- sections ---------- */
+section{padding:84px 0}
+.sec-alt{background:var(--bg)}
+.sec-head{text-align:center;margin-bottom:52px}
+.sec-head .en{display:block;font-size:13px;font-weight:700;color:var(--blue);letter-spacing:.14em;margin-bottom:8px}
+.sec-head h2{font-size:32px;font-weight:900;color:var(--navy);line-height:1.4}
+.sec-head p{margin-top:14px;color:var(--sub);font-size:15px}
+@media(max-width:860px){section{padding:56px 0}.sec-head h2{font-size:23px}.sec-head{margin-bottom:34px}}
+
+/* about */
+.about{max-width:820px;margin:0 auto;text-align:center;font-size:17px;color:var(--ink)}
+.about strong{color:var(--navy);font-weight:700}
+
+/* cards */
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:24px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:24px}
+@media(max-width:860px){.grid3,.grid2{grid-template-columns:1fr;gap:16px}}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:30px 26px}
+.card .ico{font-size:32px;margin-bottom:14px}
+.card h3{font-size:18px;font-weight:700;color:var(--navy);margin-bottom:12px;line-height:1.5}
+.card ul{list-style:none;color:var(--sub);font-size:14.5px}
+.card ul li{padding-left:20px;position:relative;margin-bottom:6px}
+.card ul li::before{content:"・";position:absolute;left:4px}
+
+/* feature */
+.feat{background:#fff;border-radius:var(--radius);padding:32px 30px;border:1px solid var(--line);position:relative}
+.feat .no{
+  position:absolute;top:-16px;left:26px;background:var(--blue);color:#fff;font-weight:900;
+  font-size:14px;padding:6px 16px;border-radius:999px;letter-spacing:.06em;
+}
+.feat h3{font-size:20px;font-weight:900;color:var(--navy);margin:10px 0 14px;line-height:1.5}
+.feat li{list-style:none;padding-left:26px;position:relative;margin-bottom:10px;font-size:15px;color:var(--ink)}
+.feat li::before{content:"✔";position:absolute;left:0;color:var(--blue);font-weight:900}
+.feat .note{margin-top:12px;font-size:12.5px;color:var(--sub)}
+
+/* results */
+.results{background:var(--navy);color:#fff;text-align:center;padding:64px 0}
+.results h2{font-size:30px;font-weight:900;line-height:1.5}
+.results h2 em{font-style:normal;color:#7FD0FF;font-size:52px;letter-spacing:-.02em}
+.results p{margin-top:16px;color:#C6D8F0;font-size:15px}
+@media(max-width:860px){.results h2{font-size:21px}.results h2 em{font-size:40px}}
+
+/* price table */
+.scroll-hint{text-align:right;font-size:13px;color:var(--sub);margin-bottom:8px}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff;-webkit-overflow-scrolling:touch}
+table{border-collapse:collapse;width:100%;min-width:680px;font-size:14.5px}
+th,td{padding:14px 16px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+thead th{background:var(--navy);color:#fff;font-weight:700;font-size:14px;position:sticky;top:0}
+tbody tr:nth-child(even){background:#F8FBFF}
+tbody tr:last-child td{border-bottom:none}
+td.name{font-weight:700;color:var(--navy);white-space:nowrap}
+td.spec{color:var(--sub);font-size:13.5px;white-space:normal;min-width:220px}
+td.price{text-align:right;font-weight:900;color:var(--blue);font-size:17px}
+td.bundle{text-align:right;color:var(--sub);font-size:13.5px}
+.price-note{margin-top:16px;font-size:13px;color:var(--sub)}
+.price-note li{list-style:none;padding-left:16px;position:relative;margin-bottom:4px}
+.price-note li::before{content:"※";position:absolute;left:0}
+
+/* area */
+.area-box{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:40px 32px;text-align:center}
+.area-box .big{font-size:26px;font-weight:900;color:var(--navy);line-height:1.5}
+.area-tags{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:24px}
+.area-tags span{background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:8px 18px;font-size:14px;font-weight:500;color:var(--navy)}
+.area-box .sub{margin-top:22px;font-size:14px;color:var(--sub)}
+@media(max-width:860px){.area-box .big{font-size:19px}}
+
+/* flow */
+.flow{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+@media(max-width:860px){.flow{grid-template-columns:1fr}}
+.step{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:28px 22px;text-align:center;position:relative}
+.step .n{
+  width:44px;height:44px;border-radius:50%;background:var(--blue);color:#fff;font-weight:900;
+  display:flex;align-items:center;justify-content:center;margin:0 auto 16px;font-size:18px;
+}
+.step h3{font-size:17px;font-weight:700;color:var(--navy);margin-bottom:10px}
+.step p{font-size:13.5px;color:var(--sub);line-height:1.7}
+
+/* faq */
+.faq{max-width:820px;margin:0 auto}
+details{background:#fff;border:1px solid var(--line);border-radius:12px;margin-bottom:12px;overflow:hidden}
+summary{
+  padding:20px 52px 20px 24px;font-weight:700;color:var(--navy);cursor:pointer;position:relative;
+  list-style:none;font-size:15.5px;line-height:1.6;
+}
+summary::-webkit-details-marker{display:none}
+summary::after{
+  content:"";position:absolute;right:24px;top:50%;width:9px;height:9px;
+  border-right:2px solid var(--blue);border-bottom:2px solid var(--blue);
+  transform:translateY(-70%) rotate(45deg);transition:.2s;
+}
+details[open] summary::after{transform:translateY(-20%) rotate(-135deg)}
+details .ans{padding:0 24px 22px;color:var(--sub);font-size:14.5px;border-top:1px solid var(--line);padding-top:18px}
+
+/* cta band */
+.cta-band{background:linear-gradient(135deg,var(--navy) 0%,#1558B0 100%);color:#fff;text-align:center;padding:72px 0}
+.cta-band h2{font-size:28px;font-weight:900;line-height:1.5}
+.cta-band p{margin:16px 0 30px;color:#C6D8F0;font-size:15px}
+.cta-band .btn{background:#fff;color:var(--navy);box-shadow:0 8px 24px rgba(0,0,0,.2)}
+.cta-band .btn:hover{background:#EAF3FE}
+.cta-tel{margin-top:26px;font-size:14px;color:#C6D8F0}
+.cta-tel strong{display:block;font-size:28px;font-weight:900;color:#fff;letter-spacing:.02em;margin-top:4px}
+@media(max-width:860px){.cta-band h2{font-size:20px}}
+
+/* contact */
+.form{max-width:720px;margin:0 auto;background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:36px 32px}
+.row{margin-bottom:22px}
+.row label{display:block;font-weight:700;font-size:14px;color:var(--navy);margin-bottom:8px}
+.row .req{background:#E8452F;color:#fff;font-size:11px;padding:2px 7px;border-radius:4px;margin-left:8px;vertical-align:2px}
+.row input,.row select,.row textarea{
+  width:100%;border:1px solid var(--line);border-radius:8px;padding:13px 14px;font-size:15px;
+  font-family:inherit;background:#FBFCFE;color:var(--ink);
+}
+.row input:focus,.row select:focus,.row textarea:focus{outline:none;border-color:var(--blue);background:#fff}
+.row textarea{min-height:130px;resize:vertical}
+.form .btn{width:100%;margin-top:8px}
+.form-note{font-size:12.5px;color:var(--sub);margin-top:14px;text-align:center}
+@media(max-width:860px){.form{padding:26px 20px}}
+
+/* footer */
+footer{background:var(--navy-d);color:#B9C9E0;padding:48px 0 28px;font-size:14px}
+.f-in{max-width:var(--max);margin:0 auto;padding:0 20px;display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap}
+.f-logo{background:#fff;border-radius:10px;padding:12px 16px;display:inline-block;margin-bottom:16px}
+.f-logo img{height:44px;width:auto}
+.f-in h4{color:#fff;font-size:15px;margin-bottom:10px;font-weight:700}
+.f-in li{list-style:none;margin-bottom:6px}
+.copy{text-align:center;margin-top:36px;padding-top:20px;border-top:1px solid rgba(255,255,255,.12);font-size:12.5px;color:#8CA3C4}
+
+/* sticky mobile cta */
+.sticky-cta{display:none}
+@media(max-width:860px){
+  .sticky-cta{
+    display:flex;position:fixed;left:0;right:0;bottom:0;z-index:99;gap:8px;padding:10px 12px;
+    background:rgba(255,255,255,.96);border-top:1px solid var(--line);box-shadow:0 -4px 16px rgba(0,0,0,.06);
+  }
+  .sticky-cta .btn{flex:1;padding:14px 8px;font-size:15px}
+  body{padding-bottom:76px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hdr">
+    <a href="#top"><img class="logo" src="img/logo.png" alt="LINEN DELIVERY"></a>
+    <nav class="nav">
+      <a href="#problem">お困りごと</a>
+      <a href="#feature">特徴</a>
+      <a href="#price">価格表</a>
+      <a href="#flow">ご利用の流れ</a>
+      <a href="#faq">よくある質問</a>
+      <a class="btn" href="#contact">お問い合わせ</a>
+    </nav>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero" id="top">
+  <div class="hero-in">
+    <div>
+      <span class="eyebrow">八ヶ岳エリア専門・宿泊施設向け</span>
+      <h1>宿のリネンは<br><span class="mark">洗わない</span>時代へ。</h1>
+      <p class="lead">
+        シーツ・枕カバー・浴衣・タオルを、レンタル＋クリーニング込みでお届け。
+        毎週の定期配送だから、洗濯も在庫管理ももう必要ありません。
+      </p>
+      <div class="price-badge">
+        <span class="lbl">ホテル仕様のリネンが</span>
+        <span class="num">120</span>
+        <span class="unit">円／枚〜</span>
+      </div>
+      <div class="hero-cta">
+        <a class="btn btn-lg" href="#contact">無料で見積もりを依頼</a>
+        <a class="btn btn-lg btn-tel" href="tel:08095483411">電話で相談する</a>
+      </div>
+    </div>
+    <div class="hero-img">
+      <img src="img/hero.png" alt="清潔にたたまれたシーツ・枕・タオル">
+    </div>
+  </div>
+</div>
+
+<!-- ABOUT -->
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="en">ABOUT</span>
+      <h2>LINEN DELIVERYとは</h2>
+    </div>
+    <p class="about">
+      LINEN DELIVERYは、<strong>山梨県北杜市（小淵沢・長坂・八ヶ岳エリア）</strong>のペンション・民宿・ホテル・宿泊施設向けの
+      リネンサプライサービスです。シーツやタオルの<strong>レンタルとクリーニングをセット</strong>にして、
+      毎週決まった曜日に施設までお届け・使用済みリネンを回収します。
+      リネンの購入費用は不要。ご注文は<strong>スマホから24時間</strong>、お電話でも承ります。
+    </p>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section class="sec-alt" id="problem">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="en">PROBLEM</span>
+      <h2>宿泊施設のリネン、<br>こんなお困りごとはありませんか？</h2>
+    </div>
+    <div class="grid3">
+      <div class="card">
+        <div class="ico">🧺</div>
+        <h3>洗濯にかかる手間と時間が大きい</h3>
+        <ul>
+          <li>チェックアウト後に大量のシーツを洗う時間がない</li>
+          <li>乾燥が追いつかず、繁忙期に部屋が回らない</li>
+          <li>洗濯の人件費・水道光熱費がじわじわ効いてくる</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="ico">✨</div>
+        <h3>自前の洗濯では仕上がりに限界がある</h3>
+        <ul>
+          <li>シーツや包布にアイロンがかけられずシワが残る</li>
+          <li>シミや黄ばみを落とす薬剤・設備がない</li>
+          <li>リネンが傷んできても買い替えの判断が難しい</li>
+        </ul>
+      </div>
+      <div class="card">
+        <div class="ico">📦</div>
+        <h3>在庫と発注の管理が煩雑</h3>
+        <ul>
+          <li>予約状況に合わせた必要枚数の読みが難しい</li>
+          <li>電話・FAXでの注文と紙の納品書管理が面倒</li>
+          <li>足りなくなったときに頼れる先がない</li>
+        </ul>
+      </div>
+    </div>
+    <div class="sec-head" style="margin:52px 0 0">
+      <h2>LINEN DELIVERYが、<br>まるごと引き受けます。</h2>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURE -->
+<section id="feature">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="en">FEATURE</span>
+      <h2>選ばれる4つの理由</h2>
+    </div>
+    <div class="grid2" style="row-gap:36px">
+      <div class="feat">
+        <span class="no">POINT 01</span>
+        <h3>毎週の定期配送で、洗濯ゼロ</h3>
+        <ul>
+          <li>曜日固定の定期便で、清潔なリネンを施設までお届け</li>
+          <li>お届けと同時に使用済みリネンを回収</li>
+          <li>レンタル＋クリーニング込みなので購入費用は一切不要</li>
+        </ul>
+        <p class="note">※ 追加・臨時のご依頼もお電話でご相談いただけます</p>
+      </div>
+      <div class="feat">
+        <span class="no">POINT 02</span>
+        <h3>1枚120円〜の明朗価格</h3>
+        <ul>
+          <li>フェイスタオル120円／枚、シーツ220円／枚〜</li>
+          <li>使った分だけのお支払い。基本料金・最低契約枚数なし</li>
+          <li>月末締め・翌月10日の銀行振込でシンプルに精算</li>
+        </ul>
+        <p class="note">※ 価格はすべて税別。詳細は下の価格表をご覧ください</p>
+      </div>
+      <div class="feat">
+        <span class="no">POINT 03</span>
+        <h3>プロの設備で仕上げた高品質リネン</h3>
+        <ul>
+          <li>大型プレス機でシワなく仕上げたシーツ・包布</li>
+          <li>専用薬剤でシミ・黄ばみまでしっかり洗浄</li>
+          <li>傷みが出たリネンは当社の基準で随時入れ替え</li>
+        </ul>
+      </div>
+      <div class="feat">
+        <span class="no">POINT 04</span>
+        <h3>専用システムでスマホから簡単注文</h3>
+        <ul>
+          <li>24時間いつでもスマホから注文、締切前なら修正も可能</li>
+          <li>「前回と同じ内容で注文」ならワンタップで完了</li>
+          <li>納品書・請求書はマイページでいつでも閲覧・印刷</li>
+        </ul>
+        <p class="note">※ 操作が難しい場合は、これまで通りお電話でのご注文も承ります</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RESULTS -->
+<div class="results">
+  <div class="wrap">
+    <h2>八ヶ岳エリアの<em>50</em>施設以上に<br>ご利用いただいています</h2>
+    <p>ペンション・民宿・ホテル・研修施設・清掃会社など、多くの施設さまにお使いいただいております。</p>
+  </div>
+</div>
+
+<!-- PRICE -->
+<section id="price">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="en">PRICE</span>
+      <h2>価格表</h2>
+      <p>（リネンレンタル＋クリーニング込み・税別）</p>
+    </div>
+    <p class="scroll-hint">横スクロールで確認できます →</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>品目</th><th>サイズ・仕様</th><th style="text-align:right">単価（税別）</th><th style="text-align:right">ご注文単位</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">シーツ（137）</td><td class="spec">137cm × 275cm（和布団用）</td><td class="price">¥220</td><td class="bundle">10枚1束 ¥2,200</td></tr>
+          <tr><td class="name">シーツ（S）</td><td class="spec">180cm × 320cm（シングルベッド用）</td><td class="price">¥225</td><td class="bundle">10枚1束 ¥2,250</td></tr>
+          <tr><td class="name">シーツ（W）</td><td class="spec">228cm × 320cm（セミダブル用）</td><td class="price">¥230</td><td class="bundle">10枚1束 ¥2,300</td></tr>
+          <tr><td class="name">枕カバー</td><td class="spec">50cm × 90cm（ピロケース）</td><td class="price">¥120</td><td class="bundle">50枚1束 ¥6,000</td></tr>
+          <tr><td class="name">額包布</td><td class="spec">155cm × 210cm（掛布団カバー）</td><td class="price">¥270</td><td class="bundle">10枚1束 ¥2,700</td></tr>
+          <tr><td class="name">浴衣（M／L）</td><td class="spec">着丈150cm</td><td class="price">¥185</td><td class="bundle">10枚1束 ¥1,850</td></tr>
+          <tr><td class="name">デュベカバー（180）</td><td class="spec">180cm幅</td><td class="price">¥400</td><td class="bundle">10枚1束 ¥4,000</td></tr>
+          <tr><td class="name">デュベカバー（200）</td><td class="spec">200cm幅</td><td class="price">¥420</td><td class="bundle">10枚1束 ¥4,200</td></tr>
+          <tr><td class="name">バスタオル</td><td class="spec">750g/打・白</td><td class="price">¥180</td><td class="bundle">10枚1束 ¥1,800</td></tr>
+          <tr><td class="name">フェイスタオル</td><td class="spec">340g/打・白</td><td class="price">¥120</td><td class="bundle">20枚1束 ¥2,400</td></tr>
+          <tr><td class="name">バスマット</td><td class="spec">650g/打・白</td><td class="price">¥160</td><td class="bundle">10枚1束 ¥1,600</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="price-note">
+      <li>表示価格はすべて税別です。</li>
+      <li>ご注文は束単位となります（例：シーツ10枚＝1束）。</li>
+      <li>注文システムのご利用料として月額1,000円（税別）を頂戴します。納品が一度もなかった月は0円です。</li>
+      <li>お支払いは月末締め・翌月10日の銀行振込です。</li>
+    </ul>
+  </div>
+</section>
+
+<!-- AREA -->
+<section class="sec-alt">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="en">AREA</span>
+      <h2>対象エリア</h2>
+    </div>
+    <div class="area-box">
+      <p class="big">山梨県北杜市を中心とした<br>八ヶ岳南麓エリアに配送しています</p>
+      <div class="area-tags">
+        <span>小淵沢町</span><span>長坂町</span><span>大泉町</span><span>高根町</span>
+        <span>白州町</span><span>武川町</span><span>須玉町</span><span>甲府市周辺</span>
+      </div>
+      <p class="sub">上記エリア外の施設さまも、配送ルートによってはご対応できる場合があります。まずはお気軽にご相談ください。</p>
+    </div>
+  </div>
+</section>
+
+<!-- FLOW -->
+<section id="flow">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="en">FLOW</span>
+      <h2>ご利用開始までの流れ</h2>
+      <p>お問い合わせから最短1週間で初回納品が可能です。</p>
+    </div>
+    <div class="flow">
+      <div class="step">
+        <div class="n">1</div>
+        <h3>お問い合わせ</h3>
+        <p>フォームまたはお電話でご連絡ください。施設の規模・必要な品目をお伺いします。</p>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <h3>お見積もり</h3>
+        <p>ご利用予定の品目・枚数をもとに、月額の概算をお出しします。訪問でのご相談も可能です。</p>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <h3>配送曜日の決定</h3>
+        <p>配送ルートに合わせて曜日を決定。注文システムのID・パスワードを発行します。</p>
+      </div>
+      <div class="step">
+        <div class="n">4</div>
+        <h3>初回納品・ご利用開始</h3>
+        <p>ご希望の日にリネンをお届け。以降は毎週決まった曜日に納品・回収いたします。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section class="sec-alt" id="faq">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="en">FAQ</span>
+      <h2>よくあるご質問</h2>
+    </div>
+    <div class="faq">
+      <details open>
+        <summary>最低利用枚数や基本料金はありますか？</summary>
+        <div class="ans">最低利用枚数・基本料金はございません。ご注文は束単位（例：シーツ10枚＝1束）で、使った分だけのお支払いです。別途、注文システムのご利用料として月額1,000円（税別）を頂戴します。</div>
+      </details>
+      <details>
+        <summary>注文の締め切りはいつですか？</summary>
+        <div class="ans">配送日の前日までにご注文ください（詳しい締切時刻は契約時にご案内します）。締切前であれば、システム上で注文内容の変更も可能です。</div>
+      </details>
+      <details>
+        <summary>急にリネンが足りなくなった場合は？</summary>
+        <div class="ans">お電話でご相談ください。配送ルートや在庫の状況によっては、臨時でお届けできる場合があります。</div>
+      </details>
+      <details>
+        <summary>使用済みのリネンはどうすればよいですか？</summary>
+        <div class="ans">配送時に回収いたしますので、所定の場所にまとめておいてください。洗濯・仕分けの必要はありません。</div>
+      </details>
+      <details>
+        <summary>シミや破れがあった場合、弁償が必要ですか？</summary>
+        <div class="ans">通常のご利用で生じる汚れ・傷みについては費用を頂戴しておりません。破損や紛失が続く場合のみ、個別にご相談させていただきます。</div>
+      </details>
+      <details>
+        <summary>繁忙期だけの利用や、途中でやめることはできますか？</summary>
+        <div class="ans">シーズン中心のご利用も可能です。契約期間の縛りや解約金はありません。休止・再開もお気軽にご相談ください。</div>
+      </details>
+      <details>
+        <summary>スマホの操作が苦手なのですが大丈夫ですか？</summary>
+        <div class="ans">これまで通り、お電話でのご注文も承っております。システムは「前回と同じ内容で注文」ボタンなど、シンプルな操作でお使いいただけるように作られています。</div>
+      </details>
+      <details>
+        <summary>支払い方法を教えてください。</summary>
+        <div class="ans">月末締め・翌月10日の銀行振込でお願いしております。請求書は毎月マイページでご確認・印刷いただけます。</div>
+      </details>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BAND -->
+<div class="cta-band">
+  <div class="wrap">
+    <h2>まずは、お見積もりから。</h2>
+    <p>施設の規模やご利用予定の品目をお伺いし、月額の概算をお出しします。ご相談だけでも歓迎です。</p>
+    <a class="btn btn-lg" href="#contact">無料で見積もりを依頼する</a>
+    <p class="cta-tel">
+      お電話でのご相談（ご注文・配送について／担当：林）
+      <strong><a href="tel:08095483411">080-9548-3411</a></strong>
+    </p>
+  </div>
+</div>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="en">CONTACT</span>
+      <h2>お問い合わせ</h2>
+      <p>リネンのご導入にあたりご不明な点がございましたら、お気軽にご連絡ください。<br>担当者より2営業日以内にご返信いたします。</p>
+    </div>
+    <form class="form" id="contact-form">
+      <div class="row">
+        <label>施設名・会社名<span class="req">必須</span></label>
+        <input type="text" name="company" required placeholder="例：ペンション八ヶ岳">
+      </div>
+      <div class="row">
+        <label>ご担当者名<span class="req">必須</span></label>
+        <input type="text" name="name" required placeholder="例：山田 太郎">
+      </div>
+      <div class="row">
+        <label>メールアドレス<span class="req">必須</span></label>
+        <input type="email" name="email" required placeholder="例：info@example.com">
+      </div>
+      <div class="row">
+        <label>電話番号<span class="req">必須</span></label>
+        <input type="tel" name="tel" required placeholder="例：0551-00-0000">
+      </div>
+      <div class="row">
+        <label>施設の所在地<span class="req">必須</span></label>
+        <input type="text" name="address" required placeholder="例：北杜市小淵沢町○○">
+      </div>
+      <div class="row">
+        <label>施設の種類<span class="req">必須</span></label>
+        <select name="type" required>
+          <option value="">選択してください</option>
+          <option>ペンション・民宿</option>
+          <option>ホテル・旅館</option>
+          <option>貸別荘・コテージ</option>
+          <option>研修施設・保養所</option>
+          <option>清掃会社・運営代行</option>
+          <option>その他</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>客室数<span class="req">必須</span></label>
+        <input type="number" name="rooms" min="1" required placeholder="例：8">
+      </div>
+      <div class="row">
+        <label>お問い合わせ内容</label>
+        <textarea name="message" placeholder="ご希望の品目・枚数、ご利用開始の時期など、ご記入ください。"></textarea>
+      </div>
+      <button type="submit" class="btn btn-lg">送信する</button>
+      <p class="form-note">お急ぎの場合は 080-9548-3411（担当：林）までお電話ください。</p>
+    </form>
+  </div>
+</section>
+
+<footer>
+  <div class="f-in">
+    <div>
+      <div class="f-logo"><img src="img/logo.png" alt="LINEN DELIVERY"></div>
+      <p>合同会社nofootball<br>山梨県北杜市</p>
+    </div>
+    <div>
+      <h4>サービス</h4>
+      <ul>
+        <li><a href="#feature">サービスの特徴</a></li>
+        <li><a href="#price">価格表</a></li>
+        <li><a href="#flow">ご利用の流れ</a></li>
+        <li><a href="#faq">よくあるご質問</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>お問い合わせ</h4>
+      <ul>
+        <li>ご注文・配送：080-9548-3411（林）</li>
+        <li>お支払い：080-1233-9862（田畑）</li>
+        <li><a href="#contact">お問い合わせフォーム</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="copy">© 2026 合同会社nofootball / LINEN DELIVERY</div>
+</footer>
+
+<div class="sticky-cta">
+  <a class="btn btn-tel" href="tel:08095483411">電話する</a>
+  <a class="btn" href="#contact">お問い合わせ</a>
+</div>
+
+<script>
+document.getElementById('contact-form').addEventListener('submit', function(e){
+  e.preventDefault();
+  alert('お問い合わせありがとうございます。\n※ 現在このフォームは送信先が未設定です。実際の送信設定については管理者にご確認ください。');
+});
+</script>
+
+</body>
+</html>
